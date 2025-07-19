@@ -120,5 +120,29 @@ export const themes: Theme[] = [
             input: '20 30% 90%',
             ring: '30 90% 60%',
         }
+    },
+    {
+        name: 'Moon',
+        colors: {
+            background: '240 10% 10%',
+            foreground: '240 10% 85%',
+            card: '240 10% 10%',
+            'card-foreground': '240 10% 85%',
+            popover: '240 10% 10%',
+            'popover-foreground': '240 10% 85%',
+            primary: '210 30% 70%',
+            'primary-foreground': '210 30% 10%',
+            secondary: '240 5% 15%',
+            'secondary-foreground': '240 5% 90%',
+            muted: '240 5% 15%',
+            'muted-foreground': '240 5% 60%',
+            accent: '50 90% 60%',
+            'accent-foreground': '50 50% 10%',
+            destructive: '0 70% 50%',
+            'destructive-foreground': '0 0% 100%',
+            border: '240 5% 20%',
+            input: '240 5% 20%',
+            ring: '210 30% 70%',
+        }
     }
 ];
