@@ -20,3 +20,9 @@ export interface SleepEntry {
   wakeTime: string; // "HH:mm"
   duration: number; // in minutes
 }
+
+export interface Event {
+  id: string;
+  name: string;
+  date: string; // ISO string format
+}
