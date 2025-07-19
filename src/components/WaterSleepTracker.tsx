@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 interface SleepEntry {
   id: string;
   date: string;
-  bedTime: string;
-  wakeTime: string;
+  bedTime: string; // "h:mm a"
+  wakeTime: string; // "h:mm a"
   duration: number; // in minutes
 }
 
@@ -24,8 +24,9 @@ const Glass = ({ filled }: { filled: boolean }) => (
     </svg>
 );
 
-const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+const hours12 = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
 const minutes = ['00', '15', '30', '45'];
+const periods = ['AM', 'PM'];
 
 export default function WaterSleepTracker() {
     const [isClient, setIsClient] = useState(false);
@@ -36,10 +37,12 @@ export default function WaterSleepTracker() {
 
     // Sleep Tracker State
     const [sleepLog, setSleepLog] = useState<SleepEntry[]>([]);
-    const [bedTimeHour, setBedTimeHour] = useState("22");
+    const [bedTimeHour, setBedTimeHour] = useState("10");
     const [bedTimeMinute, setBedTimeMinute] = useState("30");
-    const [wakeTimeHour, setWakeTimeHour] = useState("06");
+    const [bedTimePeriod, setBedTimePeriod] = useState("PM");
+    const [wakeTimeHour, setWakeTimeHour] = useState("6");
     const [wakeTimeMinute, setWakeTimeMinute] = useState("30");
+    const [wakeTimePeriod, setWakeTimePeriod] = useState("AM");
 
     useEffect(() => {
         setIsClient(true);
@@ -78,14 +81,15 @@ export default function WaterSleepTracker() {
 
     const handleLogSleep = () => {
         const today = new Date();
-        const bedTime = `${bedTimeHour}:${bedTimeMinute}`;
-        const wakeTime = `${wakeTimeHour}:${wakeTimeMinute}`;
+        const bedTime12h = `${bedTimeHour}:${bedTimeMinute} ${bedTimePeriod}`;
+        const wakeTime12h = `${wakeTimeHour}:${wakeTimeMinute} ${wakeTimePeriod}`;
         
-        const bedTimeDate = parse(bedTime, 'HH:mm', today);
-        const wakeTimeDate = parse(wakeTime, 'HH:mm', today);
+        // Use date-fns to parse 12-hour format. It's more robust.
+        const bedTimeDate = parse(bedTime12h, 'h:mm a', today);
+        const wakeTimeDate = parse(wakeTime12h, 'h:mm a', today);
 
         // Handle overnight sleep
-        if (wakeTimeDate < bedTimeDate) {
+        if (wakeTimeDate <= bedTimeDate) {
             wakeTimeDate.setDate(wakeTimeDate.getDate() + 1);
         }
 
@@ -94,8 +98,8 @@ export default function WaterSleepTracker() {
         const newEntry: SleepEntry = {
             id: crypto.randomUUID(),
             date: formatISO(today, { representation: 'date' }),
-            bedTime,
-            wakeTime,
+            bedTime: bedTime12h,
+            wakeTime: wakeTime12h,
             duration,
         };
         
@@ -168,42 +172,58 @@ export default function WaterSleepTracker() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label className='font-bold'>Bedtime</Label>
-                                <div className="flex gap-2 mt-1">
+                                <div className="flex gap-1 mt-1">
                                     <Select value={bedTimeHour} onValueChange={setBedTimeHour}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {hours.map(h => <SelectItem key={`bed-h-${h}`} value={h}>{h}</SelectItem>)}
+                                            {hours12.map(h => <SelectItem key={`bed-h-${h}`} value={h}>{h}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                     <Select value={bedTimeMinute} onValueChange={setBedTimeMinute}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {minutes.map(m => <SelectItem key={`bed-m-${m}`} value={m}>{m}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
+                                     <Select value={bedTimePeriod} onValueChange={setBedTimePeriod}>
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {periods.map(p => <SelectItem key={`bed-p-${p}`} value={p}>{p}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                             <div>
                                 <Label className='font-bold'>Wake-up Time</Label>
-                                <div className="flex gap-2 mt-1">
+                                <div className="flex gap-1 mt-1">
                                     <Select value={wakeTimeHour} onValueChange={setWakeTimeHour}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {hours.map(h => <SelectItem key={`wake-h-${h}`} value={h}>{h}</SelectItem>)}
+                                            {hours12.map(h => <SelectItem key={`wake-h-${h}`} value={h}>{h}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                     <Select value={wakeTimeMinute} onValueChange={setWakeTimeMinute}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {minutes.map(m => <SelectItem key={`wake-m-${m}`} value={m}>{m}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Select value={wakeTimePeriod} onValueChange={setWakeTimePeriod}>
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {periods.map(p => <SelectItem key={`wake-p-${p}`} value={p}>{p}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                 </div>
