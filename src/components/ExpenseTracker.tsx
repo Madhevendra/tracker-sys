@@ -8,7 +8,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { PlusIcon, TrashIcon } from './icons';
 import { format, subDays, isSameDay, parseISO } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Wallet, Utensils, Bus, ShoppingCart, FileText, Clapperboard, HeartPulse, MoreHorizontal } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
@@ -16,15 +16,24 @@ import { Progress } from './ui/progress';
 import { Label } from './ui/label';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
 
 const categoryIcons: { [key: string]: React.ReactNode } = {
-    "Food": <Utensils className='w-6 h-6 text-primary' />,
-    "Transport": <Bus className='w-6 h-6 text-primary' />,
-    "Shopping": <ShoppingCart className='w-6 h-6 text-primary' />,
-    "Bills": <FileText className='w-6 h-6 text-primary' />,
-    "Entertainment": <Clapperboard className='w-6 h-6 text-primary' />,
-    "Health": <HeartPulse className='w-6 h-6 text-primary' />,
-    "Other": <MoreHorizontal className='w-6 h-6 text-primary' />,
+    "Food": <Utensils className='w-5 h-5' />,
+    "Transport": <Bus className='w-5 h-5' />,
+    "Shopping": <ShoppingCart className='w-5 h-5' />,
+    "Bills": <FileText className='w-5 h-5' />,
+    "Entertainment": <Clapperboard className='w-5 h-5' />,
+    "Health": <HeartPulse className='w-5 h-5' />,
+    "Other": <MoreHorizontal className='w-5 h-5' />,
 };
 
 const currencies = [
@@ -235,6 +244,53 @@ export default function ExpenseTracker() {
                     <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
             </ChartContainer>
+        </CardContent>
+      </Card>
+
+       <Card className="bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+        <CardHeader>
+            <CardTitle className="font-headline text-2xl text-accent">Recent Transactions</CardTitle>
+            <CardDescription>A list of your most recent expenses.</CardDescription>
+        </CardHeader>
+        <CardContent>
+             <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead className="w-[80px]">Category</TableHead>
+                    <TableHead>Expense</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="w-[50px]">Action</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {expenses.length > 0 ? (
+                        expenses.map((expense) => (
+                            <TableRow key={expense.id}>
+                                <TableCell>
+                                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-secondary text-primary">
+                                        {categoryIcons[expense.category] || <MoreHorizontal className='w-5 h-5' />}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="font-medium">{expense.name}</TableCell>
+                                <TableCell>{format(parseISO(expense.date), 'dd MMM yyyy')}</TableCell>
+                                <TableCell className="text-right font-mono">{currency}{expense.amount.toFixed(2)}</TableCell>
+                                <TableCell>
+                                    <Button variant="ghost" size="icon" onClick={() => deleteExpense(expense.id)} className="text-muted-foreground hover:bg-destructive/20 hover:text-destructive">
+                                        <TrashIcon className="w-4 h-4" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">
+                                No expenses yet. Click "Add Expense" to start tracking.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
         </CardContent>
       </Card>
       
