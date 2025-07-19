@@ -19,7 +19,7 @@ interface SleepEntry {
 }
 
 const Glass = ({ filled }: { filled: boolean }) => (
-    <svg width="48" height="48" viewBox="0 0 24 24" className={`transition-colors duration-300 ${filled ? 'text-primary' : 'text-secondary-foreground/20'}`}>
+    <svg width="48" height="48" viewBox="0 0 24 24" className={`transition-colors duration-300 z-10 ${filled ? 'text-blue-200' : 'text-white/50'}`}>
         <path fill="currentColor" d="M8 3h8c.75 0 1.38.56 1.48 1.29l.16 1.28H6.36l.16-1.28C6.62 3.56 7.25 3 8 3m-.36 4l-1 8.83C6.55 17.02 7.21 18 8.1 18h7.8c.89 0 1.55-.98 1.46-1.87L16.36 7zM6 20v1h12v-1z"/>
     </svg>
 );
@@ -116,43 +116,49 @@ export default function WaterSleepTracker() {
         return `${hours}h ${mins}m`;
     };
 
+    const waterFillPercentage = isClient ? (waterCount / waterGoal) * 100 : 0;
+
     if (!isClient) return null;
 
     return (
         <div className="grid md:grid-cols-2 gap-8">
             {/* Water Tracker Card */}
-            <Card className="bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl text-accent flex items-center gap-2">
+            <Card className="bg-card border-4 border-foreground relative overflow-hidden" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+                 <div 
+                    className="absolute bottom-0 left-0 right-0 bg-blue-500/80 transition-all duration-1000 ease-in-out"
+                    style={{ height: `${waterFillPercentage}%` }}
+                ></div>
+                <CardHeader className="relative z-10">
+                    <CardTitle className="font-headline text-2xl text-white flex items-center gap-2" style={{textShadow: '2px 2px 2px rgba(0,0,0,0.5)'}}>
                         <Droplet className="w-8 h-8"/>
                         Water Tracker
                     </CardTitle>
-                    <CardDescription>Log your daily water intake.</CardDescription>
+                    <CardDescription className="text-white/80" style={{textShadow: '1px 1px 1px rgba(0,0,0,0.5)'}}>Log your daily water intake.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center gap-6">
+                <CardContent className="relative z-10 flex flex-col items-center gap-6">
                     <div className="flex flex-wrap justify-center gap-2">
                         {Array.from({ length: waterGoal }).map((_, i) => (
                             <Glass key={i} filled={i < waterCount} />
                         ))}
                     </div>
-                    <div className="text-4xl font-bold text-primary-foreground">{waterCount} / {waterGoal}</div>
+                    <div className="text-4xl font-bold text-white" style={{textShadow: '2px 2px 2px rgba(0,0,0,0.5)'}}>{waterCount} / {waterGoal}</div>
                     <div className="flex items-center gap-4">
-                        <Button size="icon" variant="outline" onClick={() => handleWaterChange(-1)} disabled={waterCount === 0} className="w-14 h-14 rounded-full border-4">
+                        <Button size="icon" variant="outline" onClick={() => handleWaterChange(-1)} disabled={waterCount === 0} className="w-14 h-14 rounded-full border-4 bg-white/30 hover:bg-white/50 text-white border-white">
                             <Minus className="w-8 h-8"/>
                         </Button>
-                        <Button size="icon" onClick={() => handleWaterChange(1)} disabled={waterCount >= waterGoal} className="w-20 h-20 rounded-full border-4 border-b-8 border-r-8 border-primary-foreground">
+                        <Button size="icon" onClick={() => handleWaterChange(1)} disabled={waterCount >= waterGoal} className="w-20 h-20 rounded-full border-4 border-b-8 border-r-8 bg-white/90 hover:bg-white text-blue-500 border-white">
                             <Plus className="w-12 h-12"/>
                         </Button>
                          <div className="w-14 h-14"></div>
                     </div>
-                     <div className="flex items-center gap-2">
-                        <Label htmlFor="waterGoal">Daily Goal:</Label>
+                     <div className="flex items-center gap-2 p-2 rounded-lg bg-black/20 backdrop-blur-sm">
+                        <Label htmlFor="waterGoal" className="text-white font-bold">Daily Goal:</Label>
                         <Input 
                             id="waterGoal"
                             type="number"
                             value={waterGoal}
                             onChange={(e) => setWaterGoal(Math.max(1, parseInt(e.target.value) || 1))}
-                            className="w-20 bg-background border-2 border-foreground"
+                            className="w-20 bg-background/80 border-2 border-foreground text-white"
                         />
                     </div>
                 </CardContent>
@@ -259,4 +265,5 @@ export default function WaterSleepTracker() {
             </Card>
         </div>
     );
-}
+
+    
