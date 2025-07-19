@@ -4,10 +4,21 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Expense } from '@/lib/types';
 import { AddExpenseDialog } from './AddExpenseDialog';
 import { Button } from './ui/button';
-import { PlusIcon } from './icons';
-import { format, isSameMonth, parseISO, startOfMonth } from 'date-fns';
+import { PlusIcon, TrashIcon } from './icons';
+import { format, isSameMonth, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Wallet } from 'lucide-react';
+import { Wallet, Utensils, Bus, ShoppingCart, FileText, Clapperboard, HeartPulse, MoreHorizontal } from 'lucide-react';
+
+const categoryIcons: { [key: string]: React.ReactNode } = {
+    "Food": <Utensils className='w-6 h-6 text-primary' />,
+    "Transport": <Bus className='w-6 h-6 text-primary' />,
+    "Shopping": <ShoppingCart className='w-6 h-6 text-primary' />,
+    "Bills": <FileText className='w-6 h-6 text-primary' />,
+    "Entertainment": <Clapperboard className='w-6 h-6 text-primary' />,
+    "Health": <HeartPulse className='w-6 h-6 text-primary' />,
+    "Other": <MoreHorizontal className='w-6 h-6 text-primary' />,
+};
+
 
 export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -65,7 +76,7 @@ export default function ExpenseTracker() {
                     <div className="flex items-center gap-4">
                         <Wallet className="w-12 h-12 text-primary" />
                         <div>
-                            <p className="text-3xl md:text-4xl font-bold text-primary-foreground">${monthlyTotal.toFixed(2)}</p>
+                            <p className="text-3xl md:text-4xl font-bold">${monthlyTotal.toFixed(2)}</p>
                             <p className="text-muted-foreground -mt-1">Spent in {format(new Date(), 'MMMM')}</p>
                         </div>
                     </div>
@@ -87,17 +98,22 @@ export default function ExpenseTracker() {
             <div className="bg-card p-4 rounded-lg border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
                 <ul className="divide-y-2 divide-foreground/20">
                     {expenses.map((expense) => (
-                        <li key={expense.id} className="flex justify-between items-center py-3">
+                        <li key={expense.id} className="flex justify-between items-center py-3 gap-2">
                            <div className='flex items-center gap-4'>
                                 <div className='hidden sm:block p-3 bg-secondary/50 rounded-md border-2 border-foreground'>
-                                    <Wallet className='w-6 h-6 text-primary'/>
+                                    {categoryIcons[expense.category] || <Wallet className='w-6 h-6 text-primary' />}
                                 </div>
                                 <div>
-                                    <p className="font-bold text-lg text-primary-foreground">{expense.name}</p>
-                                    <p className="text-sm text-muted-foreground">{format(parseISO(expense.date), 'MMMM d, yyyy')} - <span className='font-semibold'>{expense.category}</span></p>
+                                    <p className="font-bold text-lg">{expense.name}</p>
+                                    <p className="text-sm text-muted-foreground">{format(parseISO(expense.date), 'MMM d, yyyy')} - <span className='font-semibold'>{expense.category}</span></p>
                                 </div>
                            </div>
-                            <p className="font-bold text-xl text-right">${expense.amount.toFixed(2)}</p>
+                           <div className="flex items-center gap-4">
+                                <p className="font-bold text-xl text-right">${expense.amount.toFixed(2)}</p>
+                                <Button variant="ghost" size="icon" className="w-8 h-8 shrink-0 text-muted-foreground hover:bg-destructive/20 hover:text-destructive" onClick={() => deleteExpense(expense.id)}>
+                                    <TrashIcon className="w-5 h-5" />
+                                </Button>
+                           </div>
                         </li>
                     ))}
                 </ul>
