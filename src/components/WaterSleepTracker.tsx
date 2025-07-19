@@ -79,6 +79,24 @@ export default function WaterSleepTracker() {
         setWaterCount(prev => Math.max(0, prev + amount));
     };
 
+    const handleWaterGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        if (value === '') {
+            setWaterGoal(0); // Allow clearing the input
+        } else {
+            const numValue = parseInt(value, 10);
+            if (!isNaN(numValue) && numValue >= 1) {
+                setWaterGoal(numValue);
+            }
+        }
+    };
+    
+    const handleWaterGoalBlur = () => {
+        if (waterGoal < 1) {
+            setWaterGoal(1);
+        }
+    };
+
     const handleLogSleep = () => {
         const today = new Date();
         const bedTime12h = `${bedTimeHour}:${bedTimeMinute} ${bedTimePeriod}`;
@@ -116,7 +134,7 @@ export default function WaterSleepTracker() {
         return `${hours}h ${mins}m`;
     };
 
-    const waterFillPercentage = isClient ? (waterCount / waterGoal) * 100 : 0;
+    const waterFillPercentage = isClient && waterGoal > 0 ? (waterCount / waterGoal) * 100 : 0;
 
     if (!isClient) return null;
 
@@ -133,7 +151,7 @@ export default function WaterSleepTracker() {
                         <Droplet className="w-8 h-8"/>
                         Water Tracker
                     </CardTitle>
-                    <CardDescription>Log your daily water intake.</CardDescription>
+                    <CardDescription className="text-muted-foreground/90">Log your daily water intake.</CardDescription>
                 </CardHeader>
                 <CardContent className="relative z-10 flex flex-col items-center gap-6">
                     <div className="flex flex-wrap justify-center gap-2">
@@ -153,12 +171,14 @@ export default function WaterSleepTracker() {
                     </div>
                      <div className="flex items-center gap-2 p-2 rounded-lg bg-black/20 backdrop-blur-sm">
                         <Label htmlFor="waterGoal" className="font-bold">Daily Goal:</Label>
-                        <Input 
+                        <Input
                             id="waterGoal"
                             type="number"
-                            value={waterGoal}
-                            onChange={(e) => setWaterGoal(Math.max(1, parseInt(e.target.value) || 1))}
+                            value={waterGoal > 0 ? waterGoal : ''}
+                            onChange={handleWaterGoalChange}
+                            onBlur={handleWaterGoalBlur}
                             className="w-20 bg-background/80 border-2 border-foreground"
+                            min="1"
                         />
                     </div>
                 </CardContent>
