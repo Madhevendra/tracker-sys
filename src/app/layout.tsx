@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'PixelHabit',
-  description: 'Track your habits, build your streaks, level up your life.',
+  title: 'PixelTrack',
+  description: 'One app to track them all.',
 };
 
 export default function RootLayout({
