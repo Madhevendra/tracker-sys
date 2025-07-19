@@ -2,10 +2,11 @@
 
 import { format, startOfDay } from 'date-fns';
 import type { Habit } from '@/lib/types';
-import { calculateStreak } from '@/lib/habits';
+import { calculateStreak, calculateBestStreak } from '@/lib/habits';
 import { Button } from './ui/button';
 import { CheckIcon, FlameIcon, TrashIcon } from './icons';
 import { StreakCalendar } from './StreakCalendar';
+import { Trophy } from 'lucide-react';
 
 interface HabitItemProps {
   habit: Habit;
@@ -16,7 +17,8 @@ interface HabitItemProps {
 export function HabitItem({ habit, onDelete, onToggleCompletion }: HabitItemProps) {
   const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
   const isCompletedToday = habit.completions.includes(todayStr);
-  const streak = calculateStreak(habit.completions);
+  const currentStreak = calculateStreak(habit.completions);
+  const bestStreak = calculateBestStreak(habit.completions);
 
   return (
     <div className="bg-card p-4 rounded-lg border-4 border-foreground flex flex-col gap-4 transition-all duration-300" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
@@ -27,11 +29,23 @@ export function HabitItem({ habit, onDelete, onToggleCompletion }: HabitItemProp
         </Button>
       </div>
       
-      <div className="flex items-center gap-4 bg-secondary/30 p-2 rounded-md">
-        <FlameIcon className="w-8 h-8 text-primary" />
-        <p className="text-3xl font-bold text-primary-foreground">{streak}</p>
-        <p className="text-muted-foreground -ml-2">day streak</p>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center gap-2 bg-secondary/30 p-2 rounded-md">
+            <FlameIcon className="w-8 h-8 text-primary shrink-0" />
+            <div>
+                <p className="text-2xl font-bold text-primary-foreground">{currentStreak}</p>
+                <p className="text-xs text-muted-foreground -mt-1">Current Streak</p>
+            </div>
+        </div>
+        <div className="flex items-center gap-2 bg-secondary/30 p-2 rounded-md">
+            <Trophy className="w-8 h-8 text-accent shrink-0" />
+            <div>
+                <p className="text-2xl font-bold text-primary-foreground">{bestStreak}</p>
+                <p className="text-xs text-muted-foreground -mt-1">Best Streak</p>
+            </div>
+        </div>
       </div>
+
 
       <StreakCalendar completions={habit.completions} />
 
