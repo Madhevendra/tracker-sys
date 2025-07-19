@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Bed, Droplet, Minus, Plus, Trash2, BarChart3, Trophy, Repeat } from 'lucide-react';
+import { Bed, Droplet, Minus, Plus, Trash2 } from 'lucide-react';
 import { format, differenceInMinutes, parse, formatISO, parseISO } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { CircularProgress } from './CircularProgress';
 import type { SleepEntry } from '@/lib/types';
 import { WaterIntakeCalendar } from './WaterIntakeCalendar';
+import { SleepCalendar } from './SleepCalendar';
 import {
   Table,
   TableBody,
@@ -144,22 +144,7 @@ export default function WaterSleepTracker() {
     };
 
     const waterFillPercentage = isClient && waterGoal > 0 ? (waterCount / waterGoal) * 100 : 0;
-
-    const sleepStats = useMemo(() => {
-        const recentLog = sleepLog.slice(0, 7);
-        if (recentLog.length === 0) {
-            return { average: 0, best: 0 };
-        }
-        const totalDuration = recentLog.reduce((sum, entry) => sum + entry.duration, 0);
-        const average = totalDuration / recentLog.length || 0;
-        const best = Math.max(...recentLog.map(entry => entry.duration)) || 0;
-        
-        return { average, best };
-    }, [sleepLog]);
     
-    const sleepGoalMinutes = 8 * 60; // 8 hours
-
-
     if (!isClient) return null;
 
     return (
@@ -176,7 +161,7 @@ export default function WaterSleepTracker() {
                             <Droplet className="w-8 h-8"/>
                             Water Tracker
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground/90 font-medium">Log your daily water intake.</CardDescription>
+                        <CardDescription className="text-foreground/90 font-medium">Log your daily water intake.</CardDescription>
                     </CardHeader>
                     <CardContent className="relative z-10 flex flex-col items-center gap-6">
                         <div className="flex flex-wrap justify-center gap-2">
@@ -323,46 +308,10 @@ export default function WaterSleepTracker() {
                                 </Table>
                             </div>
                         </div>
-
-                        {sleepLog.length > 0 && (
-                            <div className="pt-6">
-                                <h3 className="text-xl font-bold font-headline text-accent text-center mb-6">Your 7-Day Sleep Insights</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    
-                                    <div className="flex flex-col items-center gap-2">
-                                        <CircularProgress 
-                                            value={(sleepStats.average / sleepGoalMinutes) * 100}
-                                            size={150}
-                                            strokeWidth={15}
-                                        >
-                                            <BarChart3 className="w-8 h-8 text-muted-foreground" />
-                                        </CircularProgress>
-                                        <div className="text-center">
-                                            <p className="text-3xl font-bold">{formatDuration(sleepStats.average)}</p>
-                                            <p className="text-sm font-medium text-muted-foreground">7-Day Average</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col items-center gap-2">
-                                        <CircularProgress
-                                            value={(sleepStats.best / sleepGoalMinutes) * 100}
-                                            size={150}
-                                            strokeWidth={15}
-                                        >
-                                            <Trophy className="w-8 h-8 text-muted-foreground" />
-                                        </CircularProgress>
-                                        <div className="text-center">
-                                            <p className="text-3xl font-bold">{formatDuration(sleepStats.best)}</p>
-                                            <p className="text-sm font-medium text-muted-foreground">Best Night</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        {sleepLog.length > 0 && <SleepCalendar sleepLog={sleepLog} />}
                     </CardContent>
                 </Card>
             </div>
         </div>
     );
-
-    
+}
