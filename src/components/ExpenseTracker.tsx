@@ -5,9 +5,11 @@ import type { Expense } from '@/lib/types';
 import { AddExpenseDialog } from './AddExpenseDialog';
 import { Button } from './ui/button';
 import { PlusIcon, TrashIcon } from './icons';
-import { format, isSameMonth, parseISO } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { format, subDays, isSameDay, parseISO, isSameMonth } from 'date-fns';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Wallet, Utensils, Bus, ShoppingCart, FileText, Clapperboard, HeartPulse, MoreHorizontal } from 'lucide-react';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 const categoryIcons: { [key: string]: React.ReactNode } = {
     "Food": <Utensils className='w-6 h-6 text-primary' />,
@@ -18,7 +20,6 @@ const categoryIcons: { [key: string]: React.ReactNode } = {
     "Health": <HeartPulse className='w-6 h-6 text-primary' />,
     "Other": <MoreHorizontal className='w-6 h-6 text-primary' />,
 };
-
 
 export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -61,14 +62,31 @@ export default function ExpenseTracker() {
       .reduce((total, expense) => total + expense.amount, 0);
   }, [expenses]);
 
+  const dailySpendingData = useMemo(() => {
+    const last7Days = Array.from({ length: 7 }, (_, i) => subDays(new Date(), i)).reverse();
+    
+    return last7Days.map(day => {
+        const dailyTotal = expenses
+            .filter(expense => isSameDay(parseISO(expense.date), day))
+            .reduce((sum, expense) => sum + expense.amount, 0);
+        
+        return {
+            date: format(day, 'EEE'), // e.g., 'Mon'
+            fullDate: format(day, 'MMM d'),
+            total: dailyTotal,
+        };
+    });
+  }, [expenses]);
+
+
   if (!isClient) {
     return null;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-2 bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+            <Card className="md:col-span-1 bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
                 <CardHeader>
                     <CardTitle className="font-headline text-2xl text-accent">Monthly Summary</CardTitle>
                 </CardHeader>
@@ -82,9 +100,9 @@ export default function ExpenseTracker() {
                     </div>
                 </CardContent>
             </Card>
-            <div className="flex items-center justify-center">
+            <div className="md:col-span-2">
                 <AddExpenseDialog onAddExpense={addExpense}>
-                    <button className="w-full h-full flex items-center justify-center gap-2 px-6 py-3 text-lg font-bold text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg transition-transform hover:scale-105 active:scale-95 active:border-b-2 active:border-r-2">
+                     <button className="w-full h-full flex items-center justify-center gap-2 px-6 py-3 text-lg font-bold text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg transition-transform hover:scale-105 active:scale-95 active:border-b-2 active:border-r-2">
                         <PlusIcon className="w-6 h-6" />
                         Add Expense
                     </button>
@@ -92,9 +110,39 @@ export default function ExpenseTracker() {
             </div>
         </div>
       
+      <Card className="bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+        <CardHeader>
+            <CardTitle className="font-headline text-2xl text-accent">Last 7 Days</CardTitle>
+            <CardDescription>Your spending overview for the past week.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <ChartContainer config={{}} className="h-[200px] w-full">
+                <BarChart accessibilityLayer data={dailySpendingData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `$${value}`} />
+                    <Tooltip 
+                        cursor={{fill: 'hsl(var(--accent) / 0.2)'}}
+                        content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                                return (
+                                <div className="p-2 rounded-lg bg-background border-2 border-foreground">
+                                    <p className="font-bold">{`${label} (${payload[0].payload.fullDate})`}</p>
+                                    <p className="text-primary">{`Total: $${payload[0].value.toFixed(2)}`}</p>
+                                </div>
+                                );
+                            }
+                            return null;
+                        }}
+                    />
+                    <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+            </ChartContainer>
+        </CardContent>
+      </Card>
+
       {expenses.length > 0 ? (
         <div className="space-y-4">
-            <h2 className="text-2xl font-bold font-headline text-accent">Recent Expenses</h2>
+            <h2 className="text-2xl font-bold font-headline text-accent">Transaction History</h2>
             <div className="bg-card p-4 rounded-lg border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
                 <ul className="divide-y-2 divide-foreground/20">
                     {expenses.map((expense) => (
