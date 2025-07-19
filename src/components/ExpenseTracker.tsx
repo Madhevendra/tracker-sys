@@ -214,7 +214,7 @@ export default function ExpenseTracker() {
         </CardHeader>
         <CardContent>
             <ChartContainer config={{}} className="h-[200px] w-full">
-                <BarChart accessibilityLayer data={spendingChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <BarChart accessibilityLayer data={spendingChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                     <XAxis dataKey="date" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <YAxis tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `${currency}${value}`} />
                     <Tooltip 
