@@ -13,6 +13,7 @@ import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recha
 import { ChartContainer } from '@/components/ui/chart';
 import { Progress } from './ui/progress';
 import { Label } from './ui/label';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 
 const categoryIcons: { [key: string]: React.ReactNode } = {
     "Food": <Utensils className='w-6 h-6 text-primary' />,
@@ -29,6 +30,7 @@ export default function ExpenseTracker() {
   const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
   const [budgetInput, setBudgetInput] = useState<string>("");
   const [isClient, setIsClient] = useState(false);
+  const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d');
 
   useEffect(() => {
     setIsClient(true);
@@ -94,21 +96,22 @@ export default function ExpenseTracker() {
     return 'bg-primary';
   };
 
-  const dailySpendingData = useMemo(() => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => subDays(new Date(), i)).reverse();
+  const spendingChartData = useMemo(() => {
+    const days = timeRange === '7d' ? 7 : 30;
+    const lastDays = Array.from({ length: days }, (_, i) => subDays(new Date(), i)).reverse();
     
-    return last7Days.map(day => {
+    return lastDays.map(day => {
         const dailyTotal = expenses
             .filter(expense => isSameDay(parseISO(expense.date), day))
             .reduce((sum, expense) => sum + expense.amount, 0);
         
         return {
-            date: format(day, 'EEE'), // e.g., 'Mon'
+            date: format(day, days === 7 ? 'EEE' : 'd'),
             fullDate: format(day, 'MMM d'),
             total: dailyTotal,
         };
     });
-  }, [expenses]);
+  }, [expenses, timeRange]);
 
   if (!isClient) {
     return null;
@@ -173,13 +176,21 @@ export default function ExpenseTracker() {
         </div>
       
       <Card className="bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
-        <CardHeader>
-            <CardTitle className="font-headline text-2xl text-accent">Last 7 Days</CardTitle>
-            <CardDescription>Your spending overview for the past week.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle className="font-headline text-2xl text-accent">Spending Overview</CardTitle>
+                <CardDescription>Your spending overview for the last {timeRange === '7d' ? '7 days' : '30 days'}.</CardDescription>
+            </div>
+            <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as '7d' | '30d')} className="w-auto">
+                <TabsList>
+                    <TabsTrigger value="7d">7 Days</TabsTrigger>
+                    <TabsTrigger value="30d">30 Days</TabsTrigger>
+                </TabsList>
+            </Tabs>
         </CardHeader>
         <CardContent>
             <ChartContainer config={{}} className="h-[200px] w-full">
-                <BarChart accessibilityLayer data={dailySpendingData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <BarChart accessibilityLayer data={spendingChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                     <XAxis dataKey="date" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <YAxis tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `$${value}`} />
                     <Tooltip 
