@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Bed, Droplet, Minus, Plus, Trash2 } from 'lucide-react';
 import { format, differenceInMinutes, parse, formatISO, parseISO } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
 
 interface SleepEntry {
   id: string;
@@ -81,13 +83,11 @@ export default function WaterSleepTracker() {
 
     const handleWaterGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        if (value === '') {
-            setWaterGoal(0); // Allow clearing the input
-        } else {
-            const numValue = parseInt(value, 10);
-            if (!isNaN(numValue) && numValue >= 1) {
-                setWaterGoal(numValue);
-            }
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue) && numValue >= 1) {
+            setWaterGoal(numValue);
+        } else if (value === '') {
+            setWaterGoal(1); // or some other default/minimum
         }
     };
     
@@ -136,153 +136,204 @@ export default function WaterSleepTracker() {
 
     const waterFillPercentage = isClient && waterGoal > 0 ? (waterCount / waterGoal) * 100 : 0;
 
+    const sleepChartData = useMemo(() => {
+        return sleepLog
+            .slice(0, 7) // Take the 7 most recent entries
+            .map(entry => ({
+                date: format(parseISO(entry.date), 'MMM d'),
+                duration: parseFloat((entry.duration / 60).toFixed(1)), // convert minutes to hours
+                fullDuration: formatDuration(entry.duration)
+            }))
+            .reverse(); // To show oldest to newest
+    }, [sleepLog]);
+
     if (!isClient) return null;
 
     return (
-        <div className="grid md:grid-cols-2 gap-8">
-            {/* Water Tracker Card */}
-            <Card className="bg-card border-4 border-foreground relative overflow-hidden" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
-                 <div 
-                    className="absolute bottom-0 left-0 right-0 bg-blue-500/80 transition-all duration-1000 ease-in-out"
-                    style={{ height: `${waterFillPercentage}%` }}
-                ></div>
-                <CardHeader className="relative z-10">
-                    <CardTitle className="font-headline text-2xl text-accent flex items-center gap-2">
-                        <Droplet className="w-8 h-8"/>
-                        Water Tracker
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground/90">Log your daily water intake.</CardDescription>
-                </CardHeader>
-                <CardContent className="relative z-10 flex flex-col items-center gap-6">
-                    <div className="flex flex-wrap justify-center gap-2">
-                        {Array.from({ length: waterGoal }).map((_, i) => (
-                            <Glass key={i} filled={i < waterCount} />
-                        ))}
-                    </div>
-                    <div className="text-4xl font-bold">{waterCount} / {waterGoal}</div>
-                    <div className="flex items-center gap-4">
-                        <Button size="icon" variant="outline" onClick={() => handleWaterChange(-1)} disabled={waterCount === 0} className="w-14 h-14 rounded-full border-4 bg-background/30 hover:bg-background/50 text-foreground border-foreground">
-                            <Minus className="w-8 h-8"/>
-                        </Button>
-                        <Button size="icon" onClick={() => handleWaterChange(1)} disabled={waterCount >= waterGoal} className="w-20 h-20 rounded-full border-4 border-b-8 border-r-8 bg-background/90 hover:bg-background text-blue-500 border-foreground">
-                            <Plus className="w-12 h-12"/>
-                        </Button>
-                         <div className="w-14 h-14"></div>
-                    </div>
-                     <div className="flex items-center gap-2 p-2 rounded-lg bg-black/20 backdrop-blur-sm">
-                        <Label htmlFor="waterGoal" className="font-bold">Daily Goal:</Label>
-                        <Input
-                            id="waterGoal"
-                            type="number"
-                            value={waterGoal > 0 ? waterGoal : ''}
-                            onChange={handleWaterGoalChange}
-                            onBlur={handleWaterGoalBlur}
-                            className="w-20 bg-background/80 border-2 border-foreground"
-                            min="1"
-                        />
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Sleep Tracker Card */}
-            <Card className="bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl text-accent flex items-center gap-2">
-                        <Bed className="w-8 h-8"/>
-                        Sleep Tracker
-                    </CardTitle>
-                    <CardDescription>Log your sleep duration.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="p-4 bg-secondary/50 rounded-lg border-2 border-foreground space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label className='font-bold'>Bedtime</Label>
-                                <div className="flex gap-1 mt-1">
-                                    <Select value={bedTimeHour} onValueChange={setBedTimeHour}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {hours12.map(h => <SelectItem key={`bed-h-${h}`} value={h}>{h}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                    <Select value={bedTimeMinute} onValueChange={setBedTimeMinute}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {minutes.map(m => <SelectItem key={`bed-m-${m}`} value={m}>{m}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                     <Select value={bedTimePeriod} onValueChange={setBedTimePeriod}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {periods.map(p => <SelectItem key={`bed-p-${p}`} value={p}>{p}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <div>
-                                <Label className='font-bold'>Wake-up Time</Label>
-                                <div className="flex gap-1 mt-1">
-                                    <Select value={wakeTimeHour} onValueChange={setWakeTimeHour}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {hours12.map(h => <SelectItem key={`wake-h-${h}`} value={h}>{h}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                    <Select value={wakeTimeMinute} onValueChange={setWakeTimeMinute}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {minutes.map(m => <SelectItem key={`wake-m-${m}`} value={m}>{m}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                    <Select value={wakeTimePeriod} onValueChange={setWakeTimePeriod}>
-                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {periods.map(p => <SelectItem key={`wake-p-${p}`} value={p}>{p}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
+        <div className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-8">
+                {/* Water Tracker Card */}
+                <Card className="bg-card border-4 border-foreground relative overflow-hidden" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+                     <div 
+                        className="absolute bottom-0 left-0 right-0 bg-blue-500/80 transition-all duration-1000 ease-in-out"
+                        style={{ height: `${waterFillPercentage}%` }}
+                    ></div>
+                    <CardHeader className="relative z-10">
+                        <CardTitle className="font-headline text-2xl text-accent flex items-center gap-2">
+                            <Droplet className="w-8 h-8 text-accent"/>
+                            Water Tracker
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground/90">Log your daily water intake.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative z-10 flex flex-col items-center gap-6">
+                        <div className="flex flex-wrap justify-center gap-2">
+                            {Array.from({ length: waterGoal }).map((_, i) => (
+                                <Glass key={i} filled={i < waterCount} />
+                            ))}
                         </div>
-                        <Button onClick={handleLogSleep} className="w-full text-lg text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg hover:bg-primary/90 active:border-b-2 active:border-r-2">Log Sleep</Button>
-                    </div>
+                        <div className="text-4xl font-bold">{waterCount} / {waterGoal}</div>
+                        <div className="flex items-center gap-4">
+                            <Button size="icon" variant="outline" onClick={() => handleWaterChange(-1)} disabled={waterCount === 0} className="w-14 h-14 rounded-full border-4 bg-background/30 hover:bg-background/50 text-foreground border-foreground">
+                                <Minus className="w-8 h-8"/>
+                            </Button>
+                            <Button size="icon" onClick={() => handleWaterChange(1)} disabled={waterCount >= waterGoal} className="w-20 h-20 rounded-full border-4 border-b-8 border-r-8 bg-background/90 hover:bg-background text-blue-500 border-foreground">
+                                <Plus className="w-12 h-12"/>
+                            </Button>
+                             <div className="w-14 h-14"></div>
+                        </div>
+                         <div className="flex items-center gap-2 p-2 rounded-lg bg-black/20 backdrop-blur-sm">
+                            <Label htmlFor="waterGoal" className="font-bold">Daily Goal:</Label>
+                            <Input
+                                id="waterGoal"
+                                type="number"
+                                value={waterGoal > 0 ? waterGoal : ''}
+                                onChange={handleWaterGoalChange}
+                                onBlur={handleWaterGoalBlur}
+                                className="w-20 bg-background/80 border-2 border-foreground"
+                                min="1"
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
 
-                    <div>
-                        <h4 className="font-bold mb-2">Recent Sleep Log</h4>
-                        <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                           {sleepLog.length > 0 ? (
-                             sleepLog.map(entry => (
-                                <div key={entry.id} className="flex justify-between items-center bg-secondary/30 p-3 rounded-md">
-                                    <div>
-                                        <p className="font-bold">{format(parseISO(entry.date), 'EEE, MMM d')}</p>
-                                        <p className="text-sm text-muted-foreground">{entry.bedTime} - {entry.wakeTime}</p>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <p className="font-bold text-lg text-primary">{formatDuration(entry.duration)}</p>
-                                        <Button variant="ghost" size="icon" onClick={() => deleteSleepEntry(entry.id)} className="text-muted-foreground hover:bg-destructive/20 hover:text-destructive">
-                                            <Trash2 className="w-4 h-4"/>
-                                        </Button>
+                {/* Sleep Tracker Card */}
+                <Card className="bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl text-accent flex items-center gap-2">
+                            <Bed className="w-8 h-8"/>
+                            Sleep Tracker
+                        </CardTitle>
+                        <CardDescription>Log your sleep duration.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="p-4 bg-secondary/50 rounded-lg border-2 border-foreground space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className='font-bold'>Bedtime</Label>
+                                    <div className="flex gap-1 mt-1">
+                                        <Select value={bedTimeHour} onValueChange={setBedTimeHour}>
+                                            <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {hours12.map(h => <SelectItem key={`bed-h-${h}`} value={h}>{h}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={bedTimeMinute} onValueChange={setBedTimeMinute}>
+                                            <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {minutes.map(m => <SelectItem key={`bed-m-${m}`} value={m}>{m}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                         <Select value={bedTimePeriod} onValueChange={setBedTimePeriod}>
+                                            <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {periods.map(p => <SelectItem key={`bed-p-${p}`} value={p}>{p}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
-                            ))
-                           ) : (
-                             <p className="text-muted-foreground text-center py-4">No sleep logged yet.</p>
-                           )}
+                                <div>
+                                    <Label className='font-bold'>Wake-up Time</Label>
+                                    <div className="flex gap-1 mt-1">
+                                        <Select value={wakeTimeHour} onValueChange={setWakeTimeHour}>
+                                            <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {hours12.map(h => <SelectItem key={`wake-h-${h}`} value={h}>{h}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={wakeTimeMinute} onValueChange={setWakeTimeMinute}>
+                                            <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {minutes.map(m => <SelectItem key={`wake-m-${m}`} value={m}>{m}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={wakeTimePeriod} onValueChange={setWakeTimePeriod}>
+                                            <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent w-1/3">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {periods.map(p => <SelectItem key={`wake-p-${p}`} value={p}>{p}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+                            <Button onClick={handleLogSleep} className="w-full text-lg text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg hover:bg-primary/90 active:border-b-2 active:border-r-2">Log Sleep</Button>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
+
+                        <div>
+                            <h4 className="font-bold mb-2">Recent Sleep Log</h4>
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                               {sleepLog.length > 0 ? (
+                                 sleepLog.map(entry => (
+                                    <div key={entry.id} className="flex justify-between items-center bg-secondary/30 p-3 rounded-md">
+                                        <div>
+                                            <p className="font-bold">{format(parseISO(entry.date), 'EEE, MMM d')}</p>
+                                            <p className="text-sm text-muted-foreground">{entry.bedTime} - {entry.wakeTime}</p>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <p className="font-bold text-lg text-primary">{formatDuration(entry.duration)}</p>
+                                            <Button variant="ghost" size="icon" onClick={() => deleteSleepEntry(entry.id)} className="text-muted-foreground hover:bg-destructive/20 hover:text-destructive">
+                                                <Trash2 className="w-4 h-4"/>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))
+                               ) : (
+                                 <p className="text-muted-foreground text-center py-4">No sleep logged yet.</p>
+                               )}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+            
+            {sleepLog.length > 0 && (
+                <Card className="bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-2xl text-accent">Sleep History (Last 7 Days)</CardTitle>
+                        <CardDescription>Your recent sleep durations at a glance.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ChartContainer config={{}} className="h-[250px] w-full">
+                            <BarChart accessibilityLayer data={sleepChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                <XAxis dataKey="date" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                                <YAxis 
+                                    tickLine={false} 
+                                    axisLine={false} 
+                                    stroke="hsl(var(--muted-foreground))" 
+                                    fontSize={12} 
+                                    tickFormatter={(value) => `${value}h`}
+                                />
+                                <Tooltip
+                                    cursor={{fill: 'hsl(var(--accent) / 0.2)'}}
+                                    content={({ active, payload, label }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                            <div className="p-2 rounded-lg bg-background border-2 border-foreground">
+                                                <p className="font-bold">{label}</p>
+                                                <p className="text-primary">{`Duration: ${payload[0].payload.fullDuration}`}</p>
+                                            </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <Bar dataKey="duration" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
