@@ -1,6 +1,7 @@
-import { Wallet, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import ExpenseTracker from '@/components/ExpenseTracker';
 
 export default function ExpensesPage() {
   return (
@@ -19,11 +20,7 @@ export default function ExpensesPage() {
         </h1>
         <p className="text-muted-foreground mt-4 text-lg">Monitor your spending and manage your budget.</p>
       </header>
-      <div className="text-center py-16 px-6 bg-secondary/50 rounded-lg border-2 border-dashed border-muted-foreground/30">
-        <Wallet className="w-16 h-16 mx-auto text-primary mb-4" />
-        <p className="text-xl font-medium text-muted-foreground">Expense Tracker Coming Soon!</p>
-        <p className="text-muted-foreground mt-2">This feature is under construction.</p>
-      </div>
+      <ExpenseTracker />
     </main>
   );
 }
