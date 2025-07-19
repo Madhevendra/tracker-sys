@@ -4,12 +4,15 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Expense } from '@/lib/types';
 import { AddExpenseDialog } from './AddExpenseDialog';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { PlusIcon, TrashIcon } from './icons';
 import { format, subDays, isSameDay, parseISO, isSameMonth } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Wallet, Utensils, Bus, ShoppingCart, FileText, Clapperboard, HeartPulse, MoreHorizontal } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer } from '@/components/ui/chart';
+import { Progress } from './ui/progress';
+import { Label } from './ui/label';
 
 const categoryIcons: { [key: string]: React.ReactNode } = {
     "Food": <Utensils className='w-6 h-6 text-primary' />,
@@ -23,6 +26,8 @@ const categoryIcons: { [key: string]: React.ReactNode } = {
 
 export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
+  const [budgetInput, setBudgetInput] = useState<string>("");
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -32,16 +37,25 @@ export default function ExpenseTracker() {
       if (storedExpenses) {
         setExpenses(JSON.parse(storedExpenses));
       }
+      const storedBudget = localStorage.getItem('pixel-budget');
+      if (storedBudget) {
+        const budget = parseFloat(storedBudget);
+        setMonthlyBudget(budget);
+        setBudgetInput(budget.toString());
+      }
     } catch (error) {
-      console.error("Failed to parse expenses from localStorage", error);
+      console.error("Failed to parse from localStorage", error);
     }
   }, []);
 
   useEffect(() => {
     if (isClient) {
       localStorage.setItem('pixel-expenses', JSON.stringify(expenses));
+      if (monthlyBudget > 0) {
+        localStorage.setItem('pixel-budget', monthlyBudget.toString());
+      }
     }
-  }, [expenses, isClient]);
+  }, [expenses, monthlyBudget, isClient]);
 
   const addExpense = (expense: Omit<Expense, 'id'>) => {
     const newExpense: Expense = {
@@ -55,12 +69,30 @@ export default function ExpenseTracker() {
     setExpenses(expenses.filter((expense) => expense.id !== id));
   };
   
+  const handleSetBudget = () => {
+    const newBudget = parseFloat(budgetInput);
+    if (!isNaN(newBudget) && newBudget > 0) {
+        setMonthlyBudget(newBudget);
+    }
+  }
+
   const monthlyTotal = useMemo(() => {
     const currentMonth = new Date();
     return expenses
       .filter(expense => isSameMonth(parseISO(expense.date), currentMonth))
       .reduce((total, expense) => total + expense.amount, 0);
   }, [expenses]);
+
+  const budgetProgress = useMemo(() => {
+    if (monthlyBudget === 0) return 0;
+    return (monthlyTotal / monthlyBudget) * 100;
+  }, [monthlyTotal, monthlyBudget]);
+
+  const getProgressColor = () => {
+    if (budgetProgress > 100) return 'bg-destructive';
+    if (budgetProgress > 75) return 'bg-yellow-500';
+    return 'bg-primary';
+  };
 
   const dailySpendingData = useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => subDays(new Date(), i)).reverse();
@@ -78,7 +110,6 @@ export default function ExpenseTracker() {
     });
   }, [expenses]);
 
-
   if (!isClient) {
     return null;
   }
@@ -86,21 +117,52 @@ export default function ExpenseTracker() {
   return (
     <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-1 bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+            <Card className="md:col-span-2 bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
                 <CardHeader>
                     <CardTitle className="font-headline text-2xl text-accent">Monthly Summary</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="flex items-center gap-4">
-                        <Wallet className="w-12 h-12 text-primary" />
+                <CardContent className="space-y-6">
+                    <div className="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <p className="text-3xl md:text-4xl font-bold">${monthlyTotal.toFixed(2)}</p>
-                            <p className="text-muted-foreground -mt-1">Spent in {format(new Date(), 'MMMM')}</p>
+                            <p className="text-4xl md:text-5xl font-bold">${monthlyTotal.toFixed(2)}</p>
+                            <p className="text-muted-foreground -mt-1">
+                                Spent in {format(new Date(), 'MMMM')}
+                                {monthlyBudget > 0 && ` of $${monthlyBudget.toFixed(2)}`}
+                            </p>
+                        </div>
+                        <div className="flex items-end gap-2">
+                             <div className="grid w-full max-w-sm items-center gap-1.5">
+                                <Label htmlFor="budget" className="font-bold">Set Budget</Label>
+                                <Input
+                                    type="number"
+                                    id="budget"
+                                    placeholder="e.g. 500"
+                                    value={budgetInput}
+                                    onChange={(e) => setBudgetInput(e.target.value)}
+                                    className="w-32 bg-background border-2 border-foreground"
+                                />
+                             </div>
+                            <Button onClick={handleSetBudget}>Set</Button>
                         </div>
                     </div>
+                    {monthlyBudget > 0 && (
+                        <div className="space-y-2">
+                            <div className="w-full bg-secondary/30 rounded-full border-2 border-foreground p-1">
+                                <Progress value={budgetProgress} className="h-4 rounded-full" indicatorClassName={getProgressColor()} />
+                            </div>
+                            <div className="flex justify-between text-sm font-medium">
+                                <span className="text-muted-foreground">0%</span>
+                                <span className={
+                                    budgetProgress > 100 ? 'text-destructive font-bold' : 
+                                    budgetProgress > 75 ? 'text-yellow-500 font-bold' : 'text-primary'
+                                }>{budgetProgress.toFixed(0)}%</span>
+                                <span className="text-muted-foreground">100%</span>
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
-            <div className="md:col-span-2">
+            <div className="md:col-span-1">
                 <AddExpenseDialog onAddExpense={addExpense}>
                      <button className="w-full h-full flex items-center justify-center gap-2 px-6 py-3 text-lg font-bold text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg transition-transform hover:scale-105 active:scale-95 active:border-b-2 active:border-r-2">
                         <PlusIcon className="w-6 h-6" />
