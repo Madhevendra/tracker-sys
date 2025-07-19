@@ -28,9 +28,6 @@ const categoryIcons: { [key: string]: React.ReactNode } = {
 
 const currencies = [
     { value: '$', label: 'USD ($)' },
-    { value: '€', label: 'EUR (€)' },
-    { value: '£', label: 'GBP (£)' },
-    { value: '¥', label: 'JPY (¥)' },
     { value: '₹', label: 'INR (₹)' },
 ]
 
