@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -241,7 +242,7 @@ export default function ExpenseTracker() {
         <div className="space-y-4">
             <h2 className="text-2xl font-bold font-headline text-accent">Transaction History</h2>
             <div className="bg-card p-4 rounded-lg border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
-                <div className="hidden md:grid md:grid-cols-[1fr_100px_100px_100px_40px] gap-4 items-center font-bold text-muted-foreground p-2 mb-2 text-center">
+                <div className="hidden md:grid md:grid-cols-[1fr_120px_120px_120px_40px] gap-4 items-center font-bold text-muted-foreground p-2 mb-2 text-center">
                     <div className="text-left pl-12">Name</div>
                     <div>Category</div>
                     <div>Date</div>
@@ -251,7 +252,7 @@ export default function ExpenseTracker() {
                 <ul className="divide-y-2 divide-foreground/20">
                     {expenses.map((expense) => (
                         <li key={expense.id} className="py-3">
-                           <div className='grid grid-cols-2 md:grid-cols-[1fr_100px_100px_100px_40px] items-center gap-4'>
+                           <div className='grid grid-cols-2 md:grid-cols-[1fr_120px_120px_120px_40px] items-center gap-x-4 gap-y-2'>
                                 <div className='flex items-center gap-4 col-span-2 md:col-span-1'>
                                     <div className='p-2 bg-secondary/50 rounded-md border-2 border-foreground'>
                                         {categoryIcons[expense.category] || <Wallet className='w-6 h-6 text-primary' />}
@@ -265,7 +266,7 @@ export default function ExpenseTracker() {
                                <p className="hidden md:block text-center font-semibold">{expense.category}</p>
                                <p className="hidden md:block text-center text-muted-foreground">{format(parseISO(expense.date), 'MMM d, yyyy')}</p>
 
-                               <div className="flex items-center gap-4 justify-end">
+                               <div className="flex items-center gap-2 justify-end col-start-2 md:col-start-auto">
                                     <p className="font-bold text-xl text-right">{currency}{expense.amount.toFixed(2)}</p>
                                     <Button variant="ghost" size="icon" className="w-8 h-8 shrink-0 text-muted-foreground hover:bg-destructive/20 hover:text-destructive" onClick={() => deleteExpense(expense.id)}>
                                         <TrashIcon className="w-5 h-5" />
