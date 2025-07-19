@@ -125,10 +125,6 @@ export default function ExpenseTracker() {
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                         <div>
                             <p className="text-4xl md:text-5xl font-bold">${currentPeriodTotal.toFixed(2)}</p>
-                            <p className="text-muted-foreground -mt-1">
-                                Spent in the last {timeRange === '7d' ? '7 days' : '30 days'}
-                                {budgetAmount > 0 && ` of $${budgetAmount.toFixed(2)}`}
-                            </p>
                         </div>
                         <div className="flex-shrink-0">
                              <Label htmlFor="budget" className="font-bold text-sm">Set Your Budget</Label>
