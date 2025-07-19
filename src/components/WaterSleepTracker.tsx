@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Bed, Droplet, Minus, Plus, Trash2, BarChart3, Trophy, Repeat } from 'lucide-react';
 import { format, differenceInMinutes, parse, formatISO, parseISO } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { CircularProgress } from './CircularProgress';
 
 interface SleepEntry {
   id: string;
@@ -81,7 +82,12 @@ export default function WaterSleepTracker() {
     
     const handleWaterGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setWaterGoal(parseInt(value, 10) || 0);
+        const parsedValue = parseInt(value, 10);
+        if (value === "") {
+            setWaterGoal(0);
+        } else if (!isNaN(parsedValue)) {
+            setWaterGoal(parsedValue);
+        }
     };
 
     const handleWaterGoalBlur = () => {
@@ -161,6 +167,8 @@ export default function WaterSleepTracker() {
         return { average, best, consistency: Math.round(consistency) };
 
     }, [sleepLog]);
+    
+    const sleepGoalMinutes = 8 * 60; // 8 hours
 
 
     if (!isClient) return null;
@@ -315,42 +323,54 @@ export default function WaterSleepTracker() {
             
             {sleepLog.length > 0 && (
                 <div>
-                     <h3 className="text-2xl font-bold font-headline text-accent text-center mb-4">Your 7-Day Sleep Insights</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="bg-card border-4 border-foreground" style={{boxShadow: '4px 4px 0 0 hsl(var(--foreground))'}}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">7-Day Average</CardTitle>
-                                <BarChart3 className="h-5 w-5 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-4xl font-bold">{formatDuration(sleepStats.average)}</div>
-                                <p className="text-xs text-muted-foreground">Average sleep per night</p>
-                            </CardContent>
-                        </Card>
-                         <Card className="bg-card border-4 border-foreground" style={{boxShadow: '4px 4px 0 0 hsl(var(--foreground))'}}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Best Night</CardTitle>
-                                <Trophy className="h-5 w-5 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-4xl font-bold">{formatDuration(sleepStats.best)}</div>
-                                <p className="text-xs text-muted-foreground">Longest sleep in last 7 days</p>
-                            </CardContent>
-                        </Card>
-                         <Card className="bg-card border-4 border-foreground" style={{boxShadow: '4px 4px 0 0 hsl(var(--foreground))'}}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Bedtime Consistency</CardTitle>
-                                <Repeat className="h-5 w-5 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-4xl font-bold">{sleepStats.consistency}%</div>
-                                <p className="text-xs text-muted-foreground">Based on bedtime variance</p>
-                            </CardContent>
-                        </Card>
+                     <h3 className="text-2xl font-bold font-headline text-accent text-center mb-6">Your 7-Day Sleep Insights</h3>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        
+                        <div className="flex flex-col items-center gap-2">
+                            <CircularProgress 
+                                value={(sleepStats.average / sleepGoalMinutes) * 100}
+                                size={150}
+                                strokeWidth={15}
+                            >
+                                <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                            </CircularProgress>
+                            <div className="text-center">
+                                <p className="text-3xl font-bold">{formatDuration(sleepStats.average)}</p>
+                                <p className="text-sm font-medium text-muted-foreground">7-Day Average</p>
+                            </div>
+                        </div>
+
+                         <div className="flex flex-col items-center gap-2">
+                             <CircularProgress
+                                value={(sleepStats.best / sleepGoalMinutes) * 100}
+                                size={150}
+                                strokeWidth={15}
+                             >
+                                <Trophy className="w-8 h-8 text-muted-foreground" />
+                             </CircularProgress>
+                             <div className="text-center">
+                                <p className="text-3xl font-bold">{formatDuration(sleepStats.best)}</p>
+                                <p className="text-sm font-medium text-muted-foreground">Best Night</p>
+                            </div>
+                        </div>
+
+                         <div className="flex flex-col items-center gap-2">
+                             <CircularProgress
+                                value={sleepStats.consistency}
+                                size={150}
+                                strokeWidth={15}
+                            >
+                                <Repeat className="w-8 h-8 text-muted-foreground" />
+                             </CircularProgress>
+                            <div className="text-center">
+                                <p className="text-3xl font-bold">{sleepStats.consistency}%</p>
+                                <p className="text-sm font-medium text-muted-foreground">Bedtime Consistency</p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             )}
         </div>
     );
-
-    
+}
