@@ -12,3 +12,11 @@ export interface Expense {
   category: string;
   date: string; // ISO string format
 }
+
+export interface SleepEntry {
+  id: string;
+  date: string; // ISO string format
+  bedTime: string; // "HH:mm"
+  wakeTime: string; // "HH:mm"
+  duration: number; // in minutes
+}
