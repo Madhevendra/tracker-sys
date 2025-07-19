@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useEffect, useTransition } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,15 +14,49 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusIcon } from './icons';
+import { suggestHabits } from '@/ai/flows/suggest-habits-flow';
+import { Loader, RefreshCcw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddHabitDialogProps {
   onAddHabit: (name: string) => void;
+  existingHabits: string[];
   children: ReactNode;
 }
 
-export function AddHabitDialog({ onAddHabit, children }: AddHabitDialogProps) {
+export function AddHabitDialog({ onAddHabit, existingHabits, children }: AddHabitDialogProps) {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [habitName, setHabitName] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isSuggesting, startSuggestionTransition] = useTransition();
+
+  const getSuggestions = () => {
+    startSuggestionTransition(async () => {
+      try {
+        const result = await suggestHabits({ existingHabits });
+        if (result.suggestions) {
+          setSuggestions(result.suggestions);
+        }
+      } catch (e) {
+        console.error(e);
+        toast({
+            variant: "destructive",
+            title: "Suggestion Error",
+            description: "Could not get AI suggestions. Please try again.",
+        })
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (open) {
+      // Reset state when opening
+      setHabitName('');
+      setSuggestions([]);
+      getSuggestions();
+    }
+  }, [open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +65,10 @@ export function AddHabitDialog({ onAddHabit, children }: AddHabitDialogProps) {
       setHabitName('');
       setOpen(false);
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setHabitName(suggestion);
   };
 
   return (
@@ -56,13 +94,38 @@ export function AddHabitDialog({ onAddHabit, children }: AddHabitDialogProps) {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button type="submit" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" className="text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg hover:bg-primary/90 active:border-b-2 active:border-r-2">
-                Add Habit
-            </Button>
-          </DialogFooter>
         </form>
+        
+        <div className="space-y-3">
+            <div className="flex justify-between items-center">
+                <Label className="font-bold">Suggestions</Label>
+                <Button variant="ghost" size="sm" onClick={getSuggestions} disabled={isSuggesting}>
+                    <RefreshCcw className={`w-4 h-4 mr-2 ${isSuggesting ? 'animate-spin' : ''}`} />
+                    Refresh
+                </Button>
+            </div>
+            {isSuggesting && !suggestions.length ? (
+                 <div className="flex justify-center items-center p-4">
+                    <Loader className="w-8 h-8 animate-spin text-primary" />
+                 </div>
+            ) : (
+                <div className="flex flex-wrap gap-2">
+                    {suggestions.map((s, i) => (
+                        <Button key={i} variant="outline" size="sm" onClick={() => handleSuggestionClick(s)} className="text-xs h-auto py-1 px-2">
+                            {s}
+                        </Button>
+                    ))}
+                </div>
+            )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button type="submit" onClick={handleSubmit} className="text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg hover:bg-primary/90 active:border-b-2 active:border-r-2">
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Add Habit
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -62,7 +62,10 @@ export default function HabitTracker() {
   return (
     <div className="space-y-6">
       <div className="flex justify-center">
-        <AddHabitDialog onAddHabit={addHabit}>
+        <AddHabitDialog 
+            onAddHabit={addHabit}
+            existingHabits={habits.map(h => h.name)}
+        >
           <button className="flex items-center gap-2 px-6 py-3 text-lg font-bold text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg transition-transform hover:scale-105 active:scale-95 active:border-b-2 active:border-r-2">
             <PlusIcon className="w-6 h-6" />
             New Habit
