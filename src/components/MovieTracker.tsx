@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MovieCard } from './MovieCard';
 import { Clapperboard } from 'lucide-react';
 import { Separator } from './ui/separator';
+import { movieStorage } from '@/lib/movie-storage';
 
 export default function MovieTracker() {
   const [items, setItems] = useState<Movie[]>([]);
@@ -15,19 +16,12 @@ export default function MovieTracker() {
 
   useEffect(() => {
     setIsClient(true);
-    try {
-      const storedItems = localStorage.getItem('pixel-movies');
-      if (storedItems) {
-        setItems(JSON.parse(storedItems));
-      }
-    } catch (error) {
-      console.error("Failed to parse items from localStorage", error);
-    }
+    setItems(movieStorage.getMovies());
   }, []);
 
   useEffect(() => {
     if (isClient) {
-      localStorage.setItem('pixel-movies', JSON.stringify(items));
+      movieStorage.saveMovies(items);
     }
   }, [items, isClient]);
 
@@ -37,11 +31,13 @@ export default function MovieTracker() {
       ...item,
       status: 'watchlist'
     };
-    setItems(prevItems => [newItem, ...prevItems]);
+    const updatedItems = movieStorage.addMovie(newItem);
+    setItems(updatedItems.map(i => ({...i, posterDataUri: ''}))); // Clear poster data from state
   };
 
   const deleteItem = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
+    const updatedItems = movieStorage.deleteMovie(id);
+    setItems(updatedItems);
   };
   
   const updateItemStatus = (id: string, status: Movie['status'], details?: { rating?: number; season?: number; episode?: number }) => {
@@ -61,6 +57,11 @@ export default function MovieTracker() {
                   } else if (status === 'watchlist') {
                       updatedItem.currentSeason = 1;
                       updatedItem.currentEpisode = 1;
+                  } else if (status === 'watched') {
+                    delete updatedItem.rating;
+                    if(details?.rating) {
+                        updatedItem.rating = details?.rating;
+                    }
                   }
               }
 
@@ -73,12 +74,12 @@ export default function MovieTracker() {
   const movies = useMemo(() => items.filter(i => i.type === 'movie'), [items]);
   const series = useMemo(() => items.filter(i => i.type === 'series'), [items]);
   
-  const movieWatchlist = movies.filter(m => m.status === 'watchlist');
-  const moviesWatched = movies.filter(m => m.status === 'watched');
+  const movieWatchlist = useMemo(() => movies.filter(m => m.status === 'watchlist'), [movies]);
+  const moviesWatched = useMemo(() => movies.filter(m => m.status === 'watched'), [movies]);
 
-  const seriesWatchlist = series.filter(s => s.status === 'watchlist');
-  const seriesWatching = series.filter(s => s.status === 'watching');
-  const seriesWatched = series.filter(s => s.status === 'watched');
+  const seriesWatchlist = useMemo(() => series.filter(s => s.status === 'watchlist'), [series]);
+  const seriesWatching = useMemo(() => series.filter(s => s.status === 'watching'), [series]);
+  const seriesWatched = useMemo(() => series.filter(s => s.status === 'watched'), [series]);
 
   if (!isClient) {
     return null;
@@ -136,35 +137,31 @@ export default function MovieTracker() {
 
       <div>
           <h2 className="text-3xl font-bold font-headline text-accent mb-4">Series</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-center text-primary border-b-4 border-primary pb-2">To Watch ({seriesWatchlist.length})</h3>
-                   <div className="p-2 space-y-4 rounded-lg bg-secondary/30 min-h-64">
-                    {renderGrid(seriesWatchlist, {
-                        title: "No series to watch.",
-                        description: "Add a series to get started."
-                    })}
-                   </div>
-              </div>
-              <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-center text-primary border-b-4 border-primary pb-2">Watching ({seriesWatching.length})</h3>
-                   <div className="p-2 space-y-4 rounded-lg bg-secondary/30 min-h-64">
-                    {renderGrid(seriesWatching, {
-                        title: "No series in progress.",
-                        description: "Update a series' progress to move it here."
-                    })}
-                   </div>
-              </div>
-              <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-center text-primary border-b-4 border-primary pb-2">Watched ({seriesWatched.length})</h3>
-                   <div className="p-2 space-y-4 rounded-lg bg-secondary/30 min-h-64">
-                    {renderGrid(seriesWatched, {
-                        title: "No series watched yet.",
-                        description: "Finish a series to move it here."
-                    })}
-                   </div>
-              </div>
-          </div>
+          <Tabs defaultValue="watching" className="w-full">
+             <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="watchlist">To Watch ({seriesWatchlist.length})</TabsTrigger>
+                <TabsTrigger value="watching">Watching ({seriesWatching.length})</TabsTrigger>
+                <TabsTrigger value="watched">Watched ({seriesWatched.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="watchlist">
+              {renderGrid(seriesWatchlist, {
+                  title: "No series to watch.",
+                  description: "Add a series to get started."
+              })}
+            </TabsContent>
+             <TabsContent value="watching">
+              {renderGrid(seriesWatching, {
+                  title: "No series in progress.",
+                  description: "Update a series' progress to move it here."
+              })}
+            </TabsContent>
+             <TabsContent value="watched">
+              {renderGrid(seriesWatched, {
+                  title: "No series watched yet.",
+                  description: "Finish a series to move it here."
+              })}
+            </TabsContent>
+          </Tabs>
       </div>
     </div>
   );
