@@ -10,14 +10,8 @@ import { Bed, Droplet, Minus, Plus, Trash2, BarChart3, Trophy, Repeat } from 'lu
 import { format, differenceInMinutes, parse, formatISO, parseISO } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { CircularProgress } from './CircularProgress';
-
-interface SleepEntry {
-  id: string;
-  date: string;
-  bedTime: string; // "h:mm a"
-  wakeTime: string; // "h:mm a"
-  duration: number; // in minutes
-}
+import type { SleepEntry } from '@/lib/types';
+import { WaterIntakeCalendar } from './WaterIntakeCalendar';
 
 const Glass = ({ filled }: { filled: boolean }) => (
     <svg width="48" height="48" viewBox="0 0 24 24" className={`transition-colors duration-300 z-10 ${filled ? 'text-blue-200' : 'text-foreground/20'}`}>
@@ -33,8 +27,10 @@ export default function WaterSleepTracker() {
     const [isClient, setIsClient] = useState(false);
 
     // Water Tracker State
-    const [waterCount, setWaterCount] = useState(0);
+    const [waterLog, setWaterLog] = useState<{ [date: string]: number }>({});
     const [waterGoal, setWaterGoal] = useState(8);
+    const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+    const waterCount = waterLog[todayStr] || 0;
 
     // Sleep Tracker State
     const [sleepLog, setSleepLog] = useState<SleepEntry[]>([]);
@@ -49,11 +45,19 @@ export default function WaterSleepTracker() {
         setIsClient(true);
         if (typeof window !== 'undefined') {
             // Load water data
-            const today = format(new Date(), 'yyyy-MM-dd');
-            const storedWater = localStorage.getItem(`pixel-water-${today}`);
-            if (storedWater) {
-                setWaterCount(JSON.parse(storedWater));
+            const storedWaterLog = localStorage.getItem('pixel-water-log');
+            if (storedWaterLog) {
+                setWaterLog(JSON.parse(storedWaterLog));
+            } else {
+                 // Migration logic from old format
+                 const todayKey = `pixel-water-${format(new Date(), 'yyyy-MM-dd')}`;
+                 const oldData = localStorage.getItem(todayKey);
+                 if (oldData) {
+                    setWaterLog({ [format(new Date(), 'yyyy-MM-dd')]: JSON.parse(oldData) });
+                    localStorage.removeItem(todayKey);
+                 }
             }
+
             const storedWaterGoal = localStorage.getItem('pixel-water-goal');
             if (storedWaterGoal) {
                 setWaterGoal(JSON.parse(storedWaterGoal));
@@ -69,29 +73,27 @@ export default function WaterSleepTracker() {
 
     useEffect(() => {
         if (isClient) {
-            const today = format(new Date(), 'yyyy-MM-dd');
-            localStorage.setItem(`pixel-water-${today}`, JSON.stringify(waterCount));
+            localStorage.setItem('pixel-water-log', JSON.stringify(waterLog));
             localStorage.setItem('pixel-water-goal', JSON.stringify(waterGoal));
             localStorage.setItem('pixel-sleep-log', JSON.stringify(sleepLog));
         }
-    }, [waterCount, waterGoal, sleepLog, isClient]);
+    }, [waterLog, waterGoal, sleepLog, isClient]);
 
     const handleWaterChange = (amount: number) => {
-        setWaterCount(prev => Math.max(0, prev + amount));
+        const newCount = Math.max(0, waterCount + amount);
+        setWaterLog(prev => ({
+            ...prev,
+            [todayStr]: newCount
+        }));
     };
     
     const handleWaterGoalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        const parsedValue = parseInt(value, 10);
-        if (value === "") {
-            setWaterGoal(0);
-        } else if (!isNaN(parsedValue)) {
-            setWaterGoal(parsedValue);
-        }
+        setWaterGoal(value === "" ? 0 : parseInt(value, 10));
     };
 
     const handleWaterGoalBlur = () => {
-        if (waterGoal < 1) {
+        if (waterGoal < 1 || isNaN(waterGoal)) {
             setWaterGoal(1);
         }
     };
@@ -139,14 +141,11 @@ export default function WaterSleepTracker() {
         if (recentLog.length === 0) {
             return { average: 0, best: 0 };
         }
-
-        // Average and Best Sleep
         const totalDuration = recentLog.reduce((sum, entry) => sum + entry.duration, 0);
         const average = totalDuration / recentLog.length || 0;
         const best = Math.max(...recentLog.map(entry => entry.duration)) || 0;
         
         return { average, best };
-
     }, [sleepLog]);
     
     const sleepGoalMinutes = 8 * 60; // 8 hours
@@ -198,6 +197,7 @@ export default function WaterSleepTracker() {
                                 min="1"
                             />
                         </div>
+                        <WaterIntakeCalendar waterLog={waterLog} waterGoal={waterGoal} />
                     </CardContent>
                 </Card>
 
