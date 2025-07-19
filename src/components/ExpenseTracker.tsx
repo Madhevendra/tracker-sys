@@ -6,7 +6,7 @@ import { AddExpenseDialog } from './AddExpenseDialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { PlusIcon, TrashIcon } from './icons';
-import { format, subDays, isSameDay, parseISO, isSameMonth } from 'date-fns';
+import { format, subDays, isSameDay, parseISO, isSameMonth, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Wallet, Utensils, Bus, ShoppingCart, FileText, Clapperboard, HeartPulse, MoreHorizontal } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
@@ -27,8 +27,9 @@ const categoryIcons: { [key: string]: React.ReactNode } = {
 
 export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
+  const [budgetAmount, setBudgetAmount] = useState<number>(0);
   const [budgetInput, setBudgetInput] = useState<string>("");
+  const [budgetType, setBudgetType] = useState<'weekly' | 'monthly'>('monthly');
   const [isClient, setIsClient] = useState(false);
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d');
 
@@ -39,11 +40,15 @@ export default function ExpenseTracker() {
       if (storedExpenses) {
         setExpenses(JSON.parse(storedExpenses));
       }
-      const storedBudget = localStorage.getItem('pixel-budget');
-      if (storedBudget) {
-        const budget = parseFloat(storedBudget);
-        setMonthlyBudget(budget);
+      const storedBudgetAmount = localStorage.getItem('pixel-budget-amount');
+      if (storedBudgetAmount) {
+        const budget = parseFloat(storedBudgetAmount);
+        setBudgetAmount(budget);
         setBudgetInput(budget.toString());
+      }
+      const storedBudgetType = localStorage.getItem('pixel-budget-type');
+      if (storedBudgetType === 'weekly' || storedBudgetType === 'monthly') {
+        setBudgetType(storedBudgetType);
       }
     } catch (error) {
       console.error("Failed to parse from localStorage", error);
@@ -53,11 +58,12 @@ export default function ExpenseTracker() {
   useEffect(() => {
     if (isClient) {
       localStorage.setItem('pixel-expenses', JSON.stringify(expenses));
-      if (monthlyBudget > 0) {
-        localStorage.setItem('pixel-budget', monthlyBudget.toString());
+      if (budgetAmount > 0) {
+        localStorage.setItem('pixel-budget-amount', budgetAmount.toString());
       }
+      localStorage.setItem('pixel-budget-type', budgetType);
     }
-  }, [expenses, monthlyBudget, isClient]);
+  }, [expenses, budgetAmount, budgetType, isClient]);
 
   const addExpense = (expense: Omit<Expense, 'id'>) => {
     const newExpense: Expense = {
@@ -73,22 +79,33 @@ export default function ExpenseTracker() {
   
   const handleSetBudget = () => {
     const newBudget = parseFloat(budgetInput);
-    if (!isNaN(newBudget) && newBudget > 0) {
-        setMonthlyBudget(newBudget);
+    if (!isNaN(newBudget) && newBudget >= 0) {
+        setBudgetAmount(newBudget);
     }
   }
 
-  const monthlyTotal = useMemo(() => {
-    const currentMonth = new Date();
-    return expenses
-      .filter(expense => isSameMonth(parseISO(expense.date), currentMonth))
-      .reduce((total, expense) => total + expense.amount, 0);
-  }, [expenses]);
+  const currentPeriodTotal = useMemo(() => {
+    const now = new Date();
+    if (budgetType === 'monthly') {
+        return expenses
+            .filter(expense => isSameMonth(parseISO(expense.date), now))
+            .reduce((total, expense) => total + expense.amount, 0);
+    } else { // weekly
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        return expenses
+            .filter(expense => {
+                const expenseDate = parseISO(expense.date);
+                return isWithinInterval(expenseDate, { start: weekStart, end: weekEnd });
+            })
+            .reduce((total, expense) => total + expense.amount, 0);
+    }
+  }, [expenses, budgetType]);
 
   const budgetProgress = useMemo(() => {
-    if (monthlyBudget === 0) return 0;
-    return (monthlyTotal / monthlyBudget) * 100;
-  }, [monthlyTotal, monthlyBudget]);
+    if (budgetAmount === 0) return 0;
+    return (currentPeriodTotal / budgetAmount) * 100;
+  }, [currentPeriodTotal, budgetAmount]);
 
   const getProgressColor = () => {
     if (budgetProgress > 100) return 'bg-destructive';
@@ -122,20 +139,28 @@ export default function ExpenseTracker() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="md:col-span-2 bg-card border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
                 <CardHeader>
-                    <CardTitle className="font-headline text-2xl text-accent">Monthly Summary</CardTitle>
+                    <CardTitle className="font-headline text-2xl text-accent">Budget Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <p className="text-4xl md:text-5xl font-bold">${monthlyTotal.toFixed(2)}</p>
+                            <p className="text-4xl md:text-5xl font-bold">${currentPeriodTotal.toFixed(2)}</p>
                             <p className="text-muted-foreground -mt-1">
-                                Spent in {format(new Date(), 'MMMM')}
-                                {monthlyBudget > 0 && ` of $${monthlyBudget.toFixed(2)}`}
+                                Spent this {budgetType === 'monthly' ? format(new Date(), 'MMMM') : 'week'}
+                                {budgetAmount > 0 && ` of $${budgetAmount.toFixed(2)}`}
                             </p>
                         </div>
                         <div className="flex items-end gap-2">
                              <div className="grid w-full max-w-sm items-center gap-1.5">
-                                <Label htmlFor="budget" className="font-bold">Set Budget</Label>
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="budget" className="font-bold">Set Budget</Label>
+                                    <Tabs value={budgetType} onValueChange={(value) => setBudgetType(value as 'weekly' | 'monthly')} className="w-auto">
+                                        <TabsList className='h-7'>
+                                            <TabsTrigger value="weekly" className='text-xs px-2 py-1'>Week</TabsTrigger>
+                                            <TabsTrigger value="monthly" className='text-xs px-2 py-1'>Month</TabsTrigger>
+                                        </TabsList>
+                                    </Tabs>
+                                </div>
                                 <Input
                                     type="number"
                                     id="budget"
@@ -148,7 +173,7 @@ export default function ExpenseTracker() {
                             <Button onClick={handleSetBudget}>Set</Button>
                         </div>
                     </div>
-                    {monthlyBudget > 0 && (
+                    {budgetAmount > 0 && (
                         <div className="space-y-2">
                             <div className="w-full bg-secondary/30 rounded-full border-2 border-foreground p-1">
                                 <Progress value={budgetProgress} className="h-4 rounded-full" indicatorClassName={getProgressColor()} />
