@@ -49,14 +49,16 @@ const trackers = [
 export default function Home() {
   return (
     <main className="container mx-auto p-4 md:p-8 font-body bg-background min-h-screen">
-       <header className="text-center mb-12 relative">
-        <div className="absolute top-0 right-0">
+       <header className="flex flex-col md:flex-row justify-between md:items-center mb-12">
+        <div className="text-center md:text-left">
+            <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary" style={{ textShadow: '4px 4px 0 hsl(var(--accent))' }}>
+            PixelTrack
+            </h1>
+            <p className="text-muted-foreground mt-4 text-lg">One app to track them all. Choose your tracker.</p>
+        </div>
+        <div className="mt-6 md:mt-0 flex justify-center">
           <ThemeSelector />
         </div>
-        <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary" style={{ textShadow: '4px 4px 0 hsl(var(--accent))' }}>
-          PixelTrack
-        </h1>
-        <p className="text-muted-foreground mt-4 text-lg">One app to track them all. Choose your tracker.</p>
       </header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {trackers.map((tracker) => (
