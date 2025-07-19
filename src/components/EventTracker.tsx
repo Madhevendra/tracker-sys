@@ -6,14 +6,43 @@ import type { Event } from '@/lib/types';
 import { AddEventDialog } from './AddEventDialog';
 import { Button } from './ui/button';
 import { PlusIcon, TrashIcon } from './icons';
-import { format, differenceInDays, startOfDay, parseISO } from 'date-fns';
+import { format, differenceInDays, parseISO, intervalToDuration } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { CalendarDays } from 'lucide-react';
+
+const useCountdown = (targetDate: string) => {
+    const countDownDate = useMemo(() => new Date(targetDate).getTime(), [targetDate]);
+    
+    const [now, setNow] = useState(new Date().getTime());
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setNow(new Date().getTime());
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const distance = countDownDate - now;
+
+    if (distance < 0) {
+        return { expired: true };
+    }
+
+    const duration = intervalToDuration({ start: 0, end: distance });
+    
+    return {
+        expired: false,
+        days: duration.days,
+        hours: duration.hours,
+        minutes: duration.minutes,
+        seconds: duration.seconds,
+    };
+};
 
 export default function EventTracker() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const today = useMemo(() => startOfDay(new Date()), []);
 
   useEffect(() => {
     setIsClient(true);
@@ -47,13 +76,13 @@ export default function EventTracker() {
   };
 
   const upcomingEvents = useMemo(() => {
-    return events.filter(event => differenceInDays(parseISO(event.date), today) >= 0);
-  }, [events, today]);
+    return events.filter(event => parseISO(event.date).getTime() > new Date().getTime());
+  }, [events]);
 
   const pastEvents = useMemo(() => {
-    return events.filter(event => differenceInDays(parseISO(event.date), today) < 0)
+    return events.filter(event => parseISO(event.date).getTime() <= new Date().getTime())
                  .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
-  }, [events, today]);
+  }, [events]);
 
 
   if (!isClient) {
@@ -61,8 +90,8 @@ export default function EventTracker() {
   }
   
   const CountdownCard = ({ event }: { event: Event }) => {
+    const countdown = useCountdown(event.date);
     const eventDate = parseISO(event.date);
-    const daysRemaining = differenceInDays(eventDate, today);
 
     return (
       <Card className="bg-card border-4 border-foreground relative flex flex-col justify-between" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
@@ -71,11 +100,31 @@ export default function EventTracker() {
         </Button>
         <CardHeader>
           <CardTitle className="font-headline text-2xl text-accent pr-8">{event.name}</CardTitle>
-          <CardDescription>{format(eventDate, 'PPP')}</CardDescription>
+          <CardDescription>{format(eventDate, 'PPP')} {event.time ? `at ${event.time}` : ''}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-6xl font-bold text-primary">{daysRemaining}</div>
-          <div className="text-muted-foreground -mt-1">{daysRemaining === 1 ? 'Day' : 'Days'} Remaining</div>
+          {!countdown.expired ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div>
+                <div className="text-4xl font-bold text-primary">{countdown.days ?? 0}</div>
+                <div className="text-xs text-muted-foreground">Days</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold text-primary">{countdown.hours ?? 0}</div>
+                <div className="text-xs text-muted-foreground">Hours</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold text-primary">{countdown.minutes ?? 0}</div>
+                <div className="text-xs text-muted-foreground">Minutes</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold text-primary">{countdown.seconds ?? 0}</div>
+                <div className="text-xs text-muted-foreground">Seconds</div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-primary font-bold">The event has started!</p>
+          )}
         </CardContent>
       </Card>
     );
@@ -97,7 +146,7 @@ export default function EventTracker() {
             {upcomingEvents.length > 0 && (
                  <div>
                     <h2 className="text-2xl font-bold mb-4 font-headline text-accent">Upcoming Events</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {upcomingEvents.map((event) => (
                            <CountdownCard key={event.id} event={event} />
                         ))}
@@ -116,7 +165,7 @@ export default function EventTracker() {
                             </Button>
                             <CardHeader>
                                 <CardTitle className="font-headline text-2xl text-accent/70 pr-8">{event.name}</CardTitle>
-                                <CardDescription>{format(parseISO(event.date), 'PPP')}</CardDescription>
+                                <CardDescription>{format(parseISO(event.date), 'PPP')} {event.time ? `at ${event.time}` : ''}</CardDescription>
                             </CardHeader>
                              <CardContent>
                                 <p className="text-muted-foreground font-medium">This event has passed.</p>

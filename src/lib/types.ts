@@ -25,4 +25,5 @@ export interface Event {
   id: string;
   name: string;
   date: string; // ISO string format
+  time?: string | null; // e.g., "10:30 PM"
 }
