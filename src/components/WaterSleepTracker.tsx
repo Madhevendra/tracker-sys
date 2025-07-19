@@ -12,6 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { CircularProgress } from './CircularProgress';
 import type { SleepEntry } from '@/lib/types';
 import { WaterIntakeCalendar } from './WaterIntakeCalendar';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
 
 const Glass = ({ filled }: { filled: boolean }) => (
     <svg width="48" height="48" viewBox="0 0 24 24" className={`transition-colors duration-300 z-10 ${filled ? 'text-blue-200' : 'text-foreground/20'}`}>
@@ -277,25 +286,41 @@ export default function WaterSleepTracker() {
 
                         <div>
                             <h4 className="font-bold mb-2">Recent Sleep Log</h4>
-                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                               {sleepLog.length > 0 ? (
-                                 sleepLog.map(entry => (
-                                    <div key={entry.id} className="flex justify-between items-center bg-secondary/30 p-3 rounded-md">
-                                        <div>
-                                            <p className="font-bold">{format(parseISO(entry.date), 'EEE, MMM d')}</p>
-                                            <p className="text-sm text-muted-foreground">{entry.bedTime} - {entry.wakeTime}</p>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <p className="font-bold text-lg text-primary">{formatDuration(entry.duration)}</p>
-                                            <Button variant="ghost" size="icon" onClick={() => deleteSleepEntry(entry.id)} className="text-muted-foreground hover:bg-destructive/20 hover:text-destructive">
-                                                <Trash2 className="w-4 h-4"/>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))
-                               ) : (
-                                 <p className="text-muted-foreground text-center py-4">No sleep logged yet.</p>
-                               )}
+                            <div className="w-full max-h-48 overflow-y-auto pr-2 rounded-lg border-2 border-foreground">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead>Bedtime</TableHead>
+                                            <TableHead>Wake-up</TableHead>
+                                            <TableHead>Duration</TableHead>
+                                            <TableHead className="text-right">Action</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {sleepLog.length > 0 ? (
+                                            sleepLog.map(entry => (
+                                                <TableRow key={entry.id}>
+                                                    <TableCell className="font-medium">{format(parseISO(entry.date), 'EEE, d MMM')}</TableCell>
+                                                    <TableCell>{entry.bedTime}</TableCell>
+                                                    <TableCell>{entry.wakeTime}</TableCell>
+                                                    <TableCell className="font-bold text-primary">{formatDuration(entry.duration)}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button variant="ghost" size="icon" onClick={() => deleteSleepEntry(entry.id)} className="text-muted-foreground hover:bg-destructive/20 hover:text-destructive">
+                                                            <Trash2 className="w-4 h-4"/>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="h-24 text-center">
+                                                    No sleep logged yet.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
                             </div>
                         </div>
 
@@ -339,4 +364,5 @@ export default function WaterSleepTracker() {
             </div>
         </div>
     );
-}
+
+    
