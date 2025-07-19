@@ -28,11 +28,12 @@ export default function HabitTracker() {
     }
   }, [habits, isClient]);
 
-  const addHabit = (name: string) => {
+  const addHabit = (name: string, target: number) => {
     const newHabit: Habit = {
       id: crypto.randomUUID(),
       name,
       completions: [],
+      target,
     };
     setHabits([...habits, newHabit]);
   };

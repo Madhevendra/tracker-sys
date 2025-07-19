@@ -2,11 +2,12 @@
 
 import { format, startOfDay } from 'date-fns';
 import type { Habit } from '@/lib/types';
-import { calculateStreak, calculateBestStreak } from '@/lib/habits';
+import { calculateStreak, calculateBestStreak, getCompletionsForCurrentWeek } from '@/lib/habits';
 import { Button } from './ui/button';
 import { CheckIcon, FlameIcon, TrashIcon } from './icons';
 import { StreakCalendar } from './StreakCalendar';
 import { Trophy } from 'lucide-react';
+import { Progress } from './ui/progress';
 
 interface HabitItemProps {
   habit: Habit;
@@ -20,6 +21,9 @@ export function HabitItem({ habit, onDelete, onToggleCompletion }: HabitItemProp
   const currentStreak = calculateStreak(habit.completions);
   const bestStreak = calculateBestStreak(habit.completions);
 
+  const weeklyCompletions = getCompletionsForCurrentWeek(habit.completions);
+  const progressPercentage = (weeklyCompletions / habit.target) * 100;
+
   return (
     <div className="bg-card p-4 rounded-lg border-4 border-foreground flex flex-col gap-4 transition-all duration-300" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
       <div className="flex justify-between items-start">
@@ -29,6 +33,16 @@ export function HabitItem({ habit, onDelete, onToggleCompletion }: HabitItemProp
         </Button>
       </div>
       
+      <div className="space-y-2">
+        <div className='flex justify-between items-end'>
+          <p className="text-sm font-bold text-muted-foreground">Weekly Goal</p>
+          <p className="text-sm font-bold text-primary-foreground">{weeklyCompletions} / {habit.target} days</p>
+        </div>
+        <div className="w-full bg-secondary/30 rounded-full border-2 border-foreground p-1">
+            <Progress value={progressPercentage} className="h-4 rounded-full" />
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center gap-2 bg-secondary/30 p-2 rounded-md">
             <FlameIcon className="w-8 h-8 text-primary shrink-0" />

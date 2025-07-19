@@ -1,4 +1,4 @@
-import { format, subDays, startOfDay, differenceInDays } from 'date-fns';
+import { format, subDays, startOfDay, differenceInDays, startOfWeek, isWithinInterval } from 'date-fns';
 
 export function calculateStreak(completions: string[]): number {
   if (completions.length === 0) return 0;
@@ -44,4 +44,18 @@ export function calculateBestStreak(completions: string[]): number {
         }
     }
     return bestStreak;
+}
+
+export function getCompletionsForCurrentWeek(completions: string[]): number {
+  const today = startOfDay(new Date());
+  const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+  const weekEnd = startOfDay(new Date());
+
+  const completionDates = completions.map(c => startOfDay(new Date(c)));
+  
+  const completionsThisWeek = completionDates.filter(date => 
+    isWithinInterval(date, { start: weekStart, end: weekEnd })
+  );
+  
+  return completionsThisWeek.length;
 }

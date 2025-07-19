@@ -17,9 +17,10 @@ import { PlusIcon } from './icons';
 import { suggestHabits } from '@/ai/flows/suggest-habits-flow';
 import { Loader, RefreshCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AddHabitDialogProps {
-  onAddHabit: (name: string) => void;
+  onAddHabit: (name: string, target: number) => void;
   existingHabits: string[];
   children: ReactNode;
 }
@@ -28,6 +29,7 @@ export function AddHabitDialog({ onAddHabit, existingHabits, children }: AddHabi
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [habitName, setHabitName] = useState('');
+  const [target, setTarget] = useState("3");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSuggesting, startSuggestionTransition] = useTransition();
 
@@ -53,6 +55,7 @@ export function AddHabitDialog({ onAddHabit, existingHabits, children }: AddHabi
     if (open) {
       // Reset state when opening
       setHabitName('');
+      setTarget("3");
       setSuggestions([]);
       getSuggestions();
     }
@@ -61,7 +64,7 @@ export function AddHabitDialog({ onAddHabit, existingHabits, children }: AddHabi
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (habitName.trim()) {
-      onAddHabit(habitName.trim());
+      onAddHabit(habitName.trim(), parseInt(target, 10));
       setHabitName('');
       setOpen(false);
     }
@@ -79,24 +82,43 @@ export function AddHabitDialog({ onAddHabit, existingHabits, children }: AddHabi
           <DialogTitle className="font-headline text-2xl text-accent">Add a New Habit</DialogTitle>
           <DialogDescription>What new skill will you master?</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right font-bold">
-                Habit
-              </Label>
-              <Input
-                id="name"
-                value={habitName}
-                onChange={(e) => setHabitName(e.target.value)}
-                className="col-span-3 bg-background border-2 border-foreground focus:ring-accent"
-                placeholder="e.g. Meditate for 10 minutes"
-              />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right font-bold">
+              Habit
+            </Label>
+            <Input
+              id="name"
+              value={habitName}
+              onChange={(e) => setHabitName(e.target.value)}
+              className="col-span-3 bg-background border-2 border-foreground focus:ring-accent"
+              placeholder="e.g. Meditate for 10 minutes"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="goal" className="text-right font-bold">
+              Goal
+            </Label>
+            <div className='col-span-3'>
+              <Select value={target} onValueChange={setTarget}>
+                <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                  <SelectValue placeholder="Set a weekly goal..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="1">1 time a week</SelectItem>
+                    <SelectItem value="2">2 times a week</SelectItem>
+                    <SelectItem value="3">3 times a week</SelectItem>
+                    <SelectItem value="4">4 times a week</SelectItem>
+                    <SelectItem value="5">5 times a week</SelectItem>
+                    <SelectItem value="6">6 times a week</SelectItem>
+                    <SelectItem value="7">Every day</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </form>
         
-        <div className="space-y-3">
+        <div className="space-y-3 pt-4">
             <div className="flex justify-between items-center">
                 <Label className="font-bold">Suggestions</Label>
                 <Button variant="ghost" size="sm" onClick={getSuggestions} disabled={isSuggesting}>
