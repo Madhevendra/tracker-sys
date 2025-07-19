@@ -18,21 +18,24 @@ import { getMovieDetails, type GetMovieDetailsOutput } from '@/ai/flows/get-movi
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Search } from 'lucide-react';
 import Image from 'next/image';
-import type { Movie } from '@/lib/types';
+import type { Movie, MovieType } from '@/lib/types';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 interface AddMovieDialogProps {
-  onAddMovie: (movie: Omit<Movie, 'id' | 'status' | 'rating'>) => void;
+  onAddItem: (item: Omit<Movie, 'id' | 'status' | 'rating'>) => void;
 }
 
-export function AddMovieDialog({ onAddMovie }: AddMovieDialogProps) {
+export function AddMovieDialog({ onAddItem }: AddMovieDialogProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
+  const [itemType, setItemType] = useState<MovieType>('movie');
   const [movieDetails, setMovieDetails] = useState<GetMovieDetailsOutput | null>(null);
   const [isSearching, startSearchTransition] = useTransition();
 
   const resetForm = () => {
     setTitle('');
+    setItemType('movie');
     setMovieDetails(null);
   };
 
@@ -54,11 +57,27 @@ export function AddMovieDialog({ onAddMovie }: AddMovieDialogProps) {
     });
   };
   
-  const handleAddMovie = () => {
+  const handleAddItem = () => {
     if (!movieDetails) return;
-    onAddMovie({
+    
+    const baseItem = {
         ...movieDetails,
-    });
+    };
+
+    if (itemType === 'series') {
+        onAddItem({
+            ...baseItem,
+            type: 'series',
+            currentSeason: 1,
+            currentEpisode: 1,
+        });
+    } else {
+        onAddItem({
+            ...baseItem,
+            type: 'movie',
+        });
+    }
+
     resetForm();
     setOpen(false);
   }
@@ -76,7 +95,7 @@ export function AddMovieDialog({ onAddMovie }: AddMovieDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-background border-4 border-foreground" style={{boxShadow: '4px 4px 0 0 hsl(var(--foreground))'}}>
         <DialogHeader>
-          <DialogTitle className="font-headline text-2xl text-accent">Add to Watchlist</DialogTitle>
+          <DialogTitle className="font-headline text-2xl text-accent">Add to Library</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
             <div className="space-y-1">
@@ -105,6 +124,20 @@ export function AddMovieDialog({ onAddMovie }: AddMovieDialogProps) {
             
             {movieDetails && (
                 <div className="space-y-4 pt-4 animate-in fade-in">
+                    <div className="space-y-2">
+                        <Label className='font-bold'>Type</Label>
+                        <RadioGroup value={itemType} onValueChange={(v) => setItemType(v as MovieType)} className="flex gap-4">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="movie" id="type-movie" />
+                                <Label htmlFor="type-movie">Movie</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="series" id="type-series" />
+                                <Label htmlFor="type-series">Series</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
                     <div className="w-full aspect-[2/3] relative rounded-lg overflow-hidden border-2 border-foreground">
                         <Image src={movieDetails.posterDataUri} alt={`Poster for ${movieDetails.title}`} layout="fill" objectFit="cover" />
                     </div>
@@ -118,9 +151,9 @@ export function AddMovieDialog({ onAddMovie }: AddMovieDialogProps) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleAddMovie} disabled={!movieDetails || isSearching}>
+          <Button onClick={handleAddItem} disabled={!movieDetails || isSearching}>
               <PlusIcon className="w-4 h-4 mr-2" />
-              Add to Watchlist
+              Add to Library
           </Button>
         </DialogFooter>
       </DialogContent>

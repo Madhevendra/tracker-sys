@@ -36,12 +36,26 @@ export interface Event {
   tasks?: Task[];
 }
 
-export interface Movie {
+export type MovieType = 'movie' | 'series';
+
+export type BaseMovie = {
   id: string;
   title: string;
   year: string;
   description: string;
   posterDataUri: string;
-  status: 'watchlist' | 'watched';
+  status: 'watchlist' | 'watching' | 'watched';
   rating?: number; // 0-5 stars
 }
+
+export type MovieItem = BaseMovie & {
+    type: 'movie';
+}
+
+export type SeriesItem = BaseMovie & {
+    type: 'series';
+    currentSeason: number;
+    currentEpisode: number;
+}
+
+export type Movie = MovieItem | SeriesItem;
