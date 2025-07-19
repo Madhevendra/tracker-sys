@@ -37,7 +37,7 @@ export default function ExpenseTracker() {
   const [budgetInput, setBudgetInput] = useState<string>("");
   const [isClient, setIsClient] = useState(false);
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d');
-  const [currency, setCurrency] = useState('$');
+  const [currency, setCurrency] = useState('₹');
 
   useEffect(() => {
     setIsClient(true);
@@ -241,20 +241,33 @@ export default function ExpenseTracker() {
         <div className="space-y-4">
             <h2 className="text-2xl font-bold font-headline text-accent">Transaction History</h2>
             <div className="bg-card p-4 rounded-lg border-4 border-foreground" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
+                <div className="hidden md:flex flex-row items-center justify-between font-bold text-muted-foreground p-2 mb-2">
+                    <div className="w-10">Type</div>
+                    <div className="flex-1">Name</div>
+                    <div className="w-32 text-center">Category</div>
+                    <div className="w-32 text-center">Date</div>
+                    <div className="w-28 text-right">Amount</div>
+                    <div className="w-12 text-right">Action</div>
+                </div>
                 <ul className="divide-y-2 divide-foreground/20">
                     {expenses.map((expense) => (
-                        <li key={expense.id} className="flex justify-between items-center py-3 gap-2">
-                           <div className='flex items-center gap-4'>
-                                <div className='hidden sm:block p-3 bg-secondary/50 rounded-md border-2 border-foreground'>
+                        <li key={expense.id} className="flex flex-col md:flex-row justify-between items-start md:items-center py-3 gap-2">
+                           <div className='flex items-center gap-4 flex-1'>
+                                <div className='p-2 bg-secondary/50 rounded-md border-2 border-foreground'>
                                     {categoryIcons[expense.category] || <Wallet className='w-6 h-6 text-primary' />}
                                 </div>
-                                <div>
-                                    <p className="font-bold text-lg">{expense.name}</p>
-                                    <p className="text-sm text-muted-foreground">{format(parseISO(expense.date), 'MMM d, yyyy')} - <span className='font-semibold'>{expense.category}</span></p>
+                                <div className="flex-1">
+                                    <p className="font-bold text-lg md:hidden">{expense.name}</p>
+                                    <p className="font-bold text-lg hidden md:block">{expense.name}</p>
+                                    <p className="text-sm text-muted-foreground md:hidden">{format(parseISO(expense.date), 'MMM d, yyyy')} - <span className='font-semibold'>{expense.category}</span></p>
                                 </div>
                            </div>
-                           <div className="flex items-center gap-4">
-                                <p className="font-bold text-xl text-right">{currency}{expense.amount.toFixed(2)}</p>
+                           <div className="hidden md:flex items-center gap-4 w-auto">
+                                <p className="w-32 text-center font-semibold">{expense.category}</p>
+                                <p className="w-32 text-center text-muted-foreground">{format(parseISO(expense.date), 'MMM d, yyyy')}</p>
+                           </div>
+                           <div className="flex items-center gap-4 w-full md:w-auto justify-between pl-14 md:pl-0">
+                                <p className="font-bold text-xl text-right md:w-28">{currency}{expense.amount.toFixed(2)}</p>
                                 <Button variant="ghost" size="icon" className="w-8 h-8 shrink-0 text-muted-foreground hover:bg-destructive/20 hover:text-destructive" onClick={() => deleteExpense(expense.id)}>
                                     <TrashIcon className="w-5 h-5" />
                                 </Button>
