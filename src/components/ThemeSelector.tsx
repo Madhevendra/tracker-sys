@@ -43,9 +43,9 @@ export default function ThemeSelector() {
 
   return (
     <TooltipProvider>
-      <div className="flex items-center gap-2">
-        <Palette className="w-5 h-5 text-muted-foreground"/>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap justify-end md:justify-start items-center gap-2">
+        <Palette className="w-5 h-5 text-muted-foreground hidden md:block"/>
+        <div className="flex items-center flex-wrap justify-end gap-3">
           {themes.map(theme => (
             <Tooltip key={theme.name}>
               <TooltipTrigger asChild>
