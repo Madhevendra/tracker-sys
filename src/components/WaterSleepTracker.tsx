@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Bed, Droplet, Minus, Plus, Trash2 } from 'lucide-react';
 import { format, differenceInMinutes, parse, formatISO, parseISO } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface SleepEntry {
   id: string;
@@ -23,6 +24,9 @@ const Glass = ({ filled }: { filled: boolean }) => (
     </svg>
 );
 
+const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+const minutes = ['00', '15', '30', '45'];
+
 export default function WaterSleepTracker() {
     const [isClient, setIsClient] = useState(false);
 
@@ -32,8 +36,10 @@ export default function WaterSleepTracker() {
 
     // Sleep Tracker State
     const [sleepLog, setSleepLog] = useState<SleepEntry[]>([]);
-    const [bedTime, setBedTime] = useState("22:30");
-    const [wakeTime, setWakeTime] = useState("06:30");
+    const [bedTimeHour, setBedTimeHour] = useState("22");
+    const [bedTimeMinute, setBedTimeMinute] = useState("30");
+    const [wakeTimeHour, setWakeTimeHour] = useState("06");
+    const [wakeTimeMinute, setWakeTimeMinute] = useState("30");
 
     useEffect(() => {
         setIsClient(true);
@@ -72,6 +78,9 @@ export default function WaterSleepTracker() {
 
     const handleLogSleep = () => {
         const today = new Date();
+        const bedTime = `${bedTimeHour}:${bedTimeMinute}`;
+        const wakeTime = `${wakeTimeHour}:${wakeTimeMinute}`;
+        
         const bedTimeDate = parse(bedTime, 'HH:mm', today);
         const wakeTimeDate = parse(wakeTime, 'HH:mm', today);
 
@@ -158,12 +167,46 @@ export default function WaterSleepTracker() {
                     <div className="p-4 bg-secondary/50 rounded-lg border-2 border-foreground space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="bedTime" className='font-bold'>Bedtime</Label>
-                                <Input id="bedTime" type="time" value={bedTime} onChange={e => setBedTime(e.target.value)} className="bg-background border-2 border-foreground mt-1"/>
+                                <Label className='font-bold'>Bedtime</Label>
+                                <div className="flex gap-2 mt-1">
+                                    <Select value={bedTimeHour} onValueChange={setBedTimeHour}>
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {hours.map(h => <SelectItem key={`bed-h-${h}`} value={h}>{h}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Select value={bedTimeMinute} onValueChange={setBedTimeMinute}>
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {minutes.map(m => <SelectItem key={`bed-m-${m}`} value={m}>{m}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                             <div>
-                                <Label htmlFor="wakeTime" className='font-bold'>Wake-up Time</Label>
-                                <Input id="wakeTime" type="time" value={wakeTime} onChange={e => setWakeTime(e.target.value)} className="bg-background border-2 border-foreground mt-1"/>
+                                <Label className='font-bold'>Wake-up Time</Label>
+                                <div className="flex gap-2 mt-1">
+                                    <Select value={wakeTimeHour} onValueChange={setWakeTimeHour}>
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {hours.map(h => <SelectItem key={`wake-h-${h}`} value={h}>{h}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Select value={wakeTimeMinute} onValueChange={setWakeTimeMinute}>
+                                        <SelectTrigger className="bg-background border-2 border-foreground focus:ring-accent">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {minutes.map(m => <SelectItem key={`wake-m-${m}`} value={m}>{m}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
                         <Button onClick={handleLogSleep} className="w-full text-lg text-primary-foreground bg-primary border-2 border-b-4 border-r-4 border-primary-foreground rounded-lg hover:bg-primary/90 active:border-b-2 active:border-r-2">Log Sleep</Button>
