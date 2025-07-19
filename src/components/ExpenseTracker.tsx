@@ -7,13 +7,14 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { PlusIcon, TrashIcon } from './icons';
 import { format, subDays, isSameDay, parseISO } from 'date-fns';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Wallet, Utensils, Bus, ShoppingCart, FileText, Clapperboard, HeartPulse, MoreHorizontal } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
 import { Progress } from './ui/progress';
 import { Label } from './ui/label';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const categoryIcons: { [key: string]: React.ReactNode } = {
     "Food": <Utensils className='w-6 h-6 text-primary' />,
@@ -25,12 +26,21 @@ const categoryIcons: { [key: string]: React.ReactNode } = {
     "Other": <MoreHorizontal className='w-6 h-6 text-primary' />,
 };
 
+const currencies = [
+    { value: '$', label: 'USD ($)' },
+    { value: '€', label: 'EUR (€)' },
+    { value: '£', label: 'GBP (£)' },
+    { value: '¥', label: 'JPY (¥)' },
+    { value: '₹', label: 'INR (₹)' },
+]
+
 export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [budgetAmount, setBudgetAmount] = useState<number>(0);
   const [budgetInput, setBudgetInput] = useState<string>("");
   const [isClient, setIsClient] = useState(false);
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d');
+  const [currency, setCurrency] = useState('$');
 
   useEffect(() => {
     setIsClient(true);
@@ -45,6 +55,10 @@ export default function ExpenseTracker() {
         setBudgetAmount(budget);
         setBudgetInput(budget.toString());
       }
+      const storedCurrency = localStorage.getItem('pixel-currency');
+      if (storedCurrency) {
+        setCurrency(storedCurrency);
+      }
     } catch (error) {
       console.error("Failed to parse from localStorage", error);
     }
@@ -56,8 +70,9 @@ export default function ExpenseTracker() {
       if (budgetAmount > 0) {
         localStorage.setItem('pixel-budget-amount', budgetAmount.toString());
       }
+      localStorage.setItem('pixel-currency', currency);
     }
-  }, [expenses, budgetAmount, isClient]);
+  }, [expenses, budgetAmount, currency, isClient]);
 
   const addExpense = (expense: Omit<Expense, 'id'>) => {
     const newExpense: Expense = {
@@ -124,25 +139,40 @@ export default function ExpenseTracker() {
                 <CardContent className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                         <div>
-                            <p className="text-4xl md:text-5xl font-bold">${currentPeriodTotal.toFixed(2)}</p>
+                            <p className="text-4xl md:text-5xl font-bold">{currency}{currentPeriodTotal.toFixed(2)}</p>
                         </div>
-                        <div className="flex-shrink-0">
-                             <Label htmlFor="budget" className="font-bold text-sm">Set Your Budget</Label>
-                             <div className="flex items-center mt-1">
-                                <div className="relative">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <span className="text-foreground text-xl font-bold">$</span>
+                        <div className="flex-shrink-0 flex items-end gap-2">
+                             <div>
+                                <Label htmlFor="budget" className="font-bold text-sm">Set Your Budget</Label>
+                                <div className="flex items-center mt-1">
+                                    <div className="relative">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                            <span className="text-foreground text-xl font-bold">{currency}</span>
+                                        </div>
+                                        <Input
+                                            type="number"
+                                            id="budget"
+                                            placeholder="500"
+                                            value={budgetInput}
+                                            onChange={(e) => setBudgetInput(e.target.value)}
+                                            className="w-40 bg-background border-2 border-r-0 border-foreground rounded-r-none pl-8 text-lg font-bold"
+                                        />
                                     </div>
-                                    <Input
-                                        type="number"
-                                        id="budget"
-                                        placeholder="500"
-                                        value={budgetInput}
-                                        onChange={(e) => setBudgetInput(e.target.value)}
-                                        className="w-40 bg-background border-2 border-r-0 border-foreground rounded-r-none pl-8 text-lg font-bold"
-                                    />
+                                    <Button onClick={handleSetBudget} className="rounded-l-none border-2 border-b-4 border-r-4 border-primary-foreground">Set</Button>
                                 </div>
-                                <Button onClick={handleSetBudget} className="rounded-l-none border-2 border-b-4 border-r-4 border-primary-foreground">Set</Button>
+                            </div>
+                             <div>
+                                <Label className="font-bold text-sm">Currency</Label>
+                                <Select value={currency} onValueChange={setCurrency}>
+                                    <SelectTrigger className="w-28 bg-background border-2 border-foreground focus:ring-accent mt-1">
+                                        <SelectValue placeholder="Select currency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {currencies.map(c => (
+                                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </div>
@@ -177,7 +207,6 @@ export default function ExpenseTracker() {
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
                 <CardTitle className="font-headline text-2xl text-accent">Spending Overview</CardTitle>
-                <CardDescription>Your spending overview for the last {timeRange === '7d' ? '7 days' : '30 days'}.</CardDescription>
             </div>
             <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as '7d' | '30d')} className="w-auto">
                 <TabsList>
@@ -190,7 +219,7 @@ export default function ExpenseTracker() {
             <ChartContainer config={{}} className="h-[200px] w-full">
                 <BarChart accessibilityLayer data={spendingChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                     <XAxis dataKey="date" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `$${value}`} />
+                    <YAxis tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(value) => `${currency}${value}`} />
                     <Tooltip 
                         cursor={{fill: 'hsl(var(--accent) / 0.2)'}}
                         content={({ active, payload, label }) => {
@@ -198,7 +227,7 @@ export default function ExpenseTracker() {
                                 return (
                                 <div className="p-2 rounded-lg bg-background border-2 border-foreground">
                                     <p className="font-bold">{`${label} (${payload[0].payload.fullDate})`}</p>
-                                    <p className="text-primary">{`Total: $${payload[0].value.toFixed(2)}`}</p>
+                                    <p className="text-primary">{`Total: ${currency}${payload[0].value.toFixed(2)}`}</p>
                                 </div>
                                 );
                             }
@@ -228,7 +257,7 @@ export default function ExpenseTracker() {
                                 </div>
                            </div>
                            <div className="flex items-center gap-4">
-                                <p className="font-bold text-xl text-right">${expense.amount.toFixed(2)}</p>
+                                <p className="font-bold text-xl text-right">{currency}{expense.amount.toFixed(2)}</p>
                                 <Button variant="ghost" size="icon" className="w-8 h-8 shrink-0 text-muted-foreground hover:bg-destructive/20 hover:text-destructive" onClick={() => deleteExpense(expense.id)}>
                                     <TrashIcon className="w-5 h-5" />
                                 </Button>
