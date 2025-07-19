@@ -298,45 +298,45 @@ export default function WaterSleepTracker() {
                                )}
                             </div>
                         </div>
+
+                        {sleepLog.length > 0 && (
+                            <div className="pt-6">
+                                <h3 className="text-xl font-bold font-headline text-accent text-center mb-6">Your 7-Day Sleep Insights</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    
+                                    <div className="flex flex-col items-center gap-2">
+                                        <CircularProgress 
+                                            value={(sleepStats.average / sleepGoalMinutes) * 100}
+                                            size={150}
+                                            strokeWidth={15}
+                                        >
+                                            <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                                        </CircularProgress>
+                                        <div className="text-center">
+                                            <p className="text-3xl font-bold">{formatDuration(sleepStats.average)}</p>
+                                            <p className="text-sm font-medium text-muted-foreground">7-Day Average</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col items-center gap-2">
+                                        <CircularProgress
+                                            value={(sleepStats.best / sleepGoalMinutes) * 100}
+                                            size={150}
+                                            strokeWidth={15}
+                                        >
+                                            <Trophy className="w-8 h-8 text-muted-foreground" />
+                                        </CircularProgress>
+                                        <div className="text-center">
+                                            <p className="text-3xl font-bold">{formatDuration(sleepStats.best)}</p>
+                                            <p className="text-sm font-medium text-muted-foreground">Best Night</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
-            
-            {sleepLog.length > 0 && (
-                <div>
-                     <h3 className="text-2xl font-bold font-headline text-accent text-center mb-6">Your 7-Day Sleep Insights</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:w-2/3 mx-auto">
-                        
-                        <div className="flex flex-col items-center gap-2">
-                            <CircularProgress 
-                                value={(sleepStats.average / sleepGoalMinutes) * 100}
-                                size={150}
-                                strokeWidth={15}
-                            >
-                                <BarChart3 className="w-8 h-8 text-muted-foreground" />
-                            </CircularProgress>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold">{formatDuration(sleepStats.average)}</p>
-                                <p className="text-sm font-medium text-muted-foreground">7-Day Average</p>
-                            </div>
-                        </div>
-
-                         <div className="flex flex-col items-center gap-2">
-                             <CircularProgress
-                                value={(sleepStats.best / sleepGoalMinutes) * 100}
-                                size={150}
-                                strokeWidth={15}
-                             >
-                                <Trophy className="w-8 h-8 text-muted-foreground" />
-                             </CircularProgress>
-                             <div className="text-center">
-                                <p className="text-3xl font-bold">{formatDuration(sleepStats.best)}</p>
-                                <p className="text-sm font-medium text-muted-foreground">Best Night</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
