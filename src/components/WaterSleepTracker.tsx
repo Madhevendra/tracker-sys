@@ -128,7 +128,7 @@ export default function WaterSleepTracker() {
     const formatDuration = (minutes: number) => {
         if (minutes < 0 || isNaN(minutes)) return `0h 0m`;
         const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
+        const mins = Math.floor(minutes % 60);
         return `${hours}h ${mins}m`;
     };
 
@@ -137,34 +137,15 @@ export default function WaterSleepTracker() {
     const sleepStats = useMemo(() => {
         const recentLog = sleepLog.slice(0, 7);
         if (recentLog.length === 0) {
-            return { average: 0, best: 0, consistency: 0 };
+            return { average: 0, best: 0 };
         }
 
         // Average and Best Sleep
         const totalDuration = recentLog.reduce((sum, entry) => sum + entry.duration, 0);
         const average = totalDuration / recentLog.length || 0;
         const best = Math.max(...recentLog.map(entry => entry.duration)) || 0;
-
-        // Consistency Score
-        let consistency = 0;
-        if (recentLog.length > 1) {
-            const bedTimesInMinutes = recentLog.map(entry => {
-                const time = parse(entry.bedTime, 'h:mm a', new Date());
-                let minutes = time.getHours() * 60 + time.getMinutes();
-                // Handle times past midnight (e.g. 1 AM is smaller than 11 PM)
-                if (minutes < 12 * 60) minutes += 24 * 60;
-                return minutes;
-            });
-            const meanBedTime = bedTimesInMinutes.reduce((a, b) => a + b) / bedTimesInMinutes.length;
-            const stdDev = Math.sqrt(bedTimesInMinutes.map(x => Math.pow(x - meanBedTime, 2)).reduce((a, b) => a + b) / bedTimesInMinutes.length);
-            
-            // Normalize std dev to a 0-100 score. 60 min deviation is acceptable (around 75% score).
-            consistency = Math.max(0, 100 - (stdDev / 90) * 100);
-        } else {
-             consistency = 100;
-        }
-
-        return { average, best, consistency: Math.round(consistency) };
+        
+        return { average, best };
 
     }, [sleepLog]);
     
@@ -324,7 +305,7 @@ export default function WaterSleepTracker() {
             {sleepLog.length > 0 && (
                 <div>
                      <h3 className="text-2xl font-bold font-headline text-accent text-center mb-6">Your 7-Day Sleep Insights</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:w-2/3 mx-auto">
                         
                         <div className="flex flex-col items-center gap-2">
                             <CircularProgress 
@@ -353,21 +334,6 @@ export default function WaterSleepTracker() {
                                 <p className="text-sm font-medium text-muted-foreground">Best Night</p>
                             </div>
                         </div>
-
-                         <div className="flex flex-col items-center gap-2">
-                             <CircularProgress
-                                value={sleepStats.consistency}
-                                size={150}
-                                strokeWidth={15}
-                            >
-                                <Repeat className="w-8 h-8 text-muted-foreground" />
-                             </CircularProgress>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold">{sleepStats.consistency}%</p>
-                                <p className="text-sm font-medium text-muted-foreground">Bedtime Consistency</p>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             )}
