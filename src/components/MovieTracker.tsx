@@ -69,10 +69,6 @@ export default function MovieTracker() {
           return item;
       }));
   }
-
-  if (!isClient) {
-    return null;
-  }
   
   const movies = useMemo(() => items.filter(i => i.type === 'movie'), [items]);
   const series = useMemo(() => items.filter(i => i.type === 'series'), [items]);
@@ -83,6 +79,10 @@ export default function MovieTracker() {
   const seriesWatchlist = series.filter(s => s.status === 'watchlist');
   const seriesWatching = series.filter(s => s.status === 'watching');
   const seriesWatched = series.filter(s => s.status === 'watched');
+
+  if (!isClient) {
+    return null;
+  }
 
   const renderGrid = (items: Movie[], emptyMessage: {title: string, description: string}) => {
       if (items.length > 0) {
