@@ -4,7 +4,7 @@ import { format, startOfDay } from 'date-fns';
 import type { Habit } from '@/lib/types';
 import { calculateStreak } from '@/lib/habits';
 import { Button } from './ui/button';
-import { CheckIcon, FlameIcon, TrashIcon, Undo2 } from './icons';
+import { CheckIcon, FlameIcon, TrashIcon } from './icons';
 import { StreakCalendar } from './StreakCalendar';
 
 interface HabitItemProps {
@@ -37,14 +37,15 @@ export function HabitItem({ habit, onDelete, onToggleCompletion }: HabitItemProp
 
       <button
         onClick={() => onToggleCompletion(habit.id, todayStr)}
-        className={`w-full py-4 text-xl font-bold rounded-lg border-2 border-b-4 border-r-4  transition-all active:scale-[0.98] active:border-b-2 active:border-r-2 flex items-center justify-center gap-2 ${
+        disabled={isCompletedToday}
+        className={`w-full py-4 text-xl font-bold rounded-lg border-2 border-b-4 border-r-4  transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed ${
           isCompletedToday
             ? 'bg-primary text-primary-foreground border-primary-foreground'
-            : 'bg-secondary text-secondary-foreground border-foreground'
+            : 'bg-secondary text-secondary-foreground border-foreground active:scale-[0.98] active:border-b-2 active:border-r-2'
         }`}
       >
-        {isCompletedToday ? <Undo2 className="w-6 h-6" /> : <CheckIcon className="w-6 h-6" />}
-        {isCompletedToday ? "Undo" : "Mark as Complete"}
+        <CheckIcon className="w-6 h-6" />
+        {isCompletedToday ? "Completed" : "Mark as Complete"}
       </button>
     </div>
   );
