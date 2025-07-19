@@ -57,7 +57,6 @@ export function AddMovieDialog({ onAddMovie }: AddMovieDialogProps) {
   const handleAddMovie = () => {
     if (!movieDetails) return;
     onAddMovie({
-        title,
         ...movieDetails,
     });
     resetForm();
@@ -107,10 +106,10 @@ export function AddMovieDialog({ onAddMovie }: AddMovieDialogProps) {
             {movieDetails && (
                 <div className="space-y-4 pt-4 animate-in fade-in">
                     <div className="w-full aspect-[2/3] relative rounded-lg overflow-hidden border-2 border-foreground">
-                        <Image src={movieDetails.posterDataUri} alt={`Poster for ${title}`} layout="fill" objectFit="cover" />
+                        <Image src={movieDetails.posterDataUri} alt={`Poster for ${movieDetails.title}`} layout="fill" objectFit="cover" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold font-headline">{title} ({movieDetails.year})</h3>
+                        <h3 className="text-xl font-bold font-headline">{movieDetails.title} ({movieDetails.year})</h3>
                         <p className="text-sm text-muted-foreground">{movieDetails.description}</p>
                     </div>
                 </div>
