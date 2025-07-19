@@ -130,19 +130,24 @@ export default function ExpenseTracker() {
                                 {budgetAmount > 0 && ` of $${budgetAmount.toFixed(2)}`}
                             </p>
                         </div>
-                        <div className="flex items-end gap-2">
-                             <div className="grid w-full max-w-sm items-center gap-1.5">
-                                <Label htmlFor="budget" className="font-bold">Set Budget</Label>
-                                <Input
-                                    type="number"
-                                    id="budget"
-                                    placeholder="e.g. 500"
-                                    value={budgetInput}
-                                    onChange={(e) => setBudgetInput(e.target.value)}
-                                    className="w-32 bg-background border-2 border-foreground"
-                                />
-                             </div>
-                            <Button onClick={handleSetBudget}>Set</Button>
+                        <div className="flex-shrink-0">
+                             <Label htmlFor="budget" className="font-bold text-sm">Set Your Budget</Label>
+                             <div className="flex items-center mt-1">
+                                <div className="relative">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span className="text-foreground text-xl font-bold">$</span>
+                                    </div>
+                                    <Input
+                                        type="number"
+                                        id="budget"
+                                        placeholder="500"
+                                        value={budgetInput}
+                                        onChange={(e) => setBudgetInput(e.target.value)}
+                                        className="w-40 bg-background border-2 border-r-0 border-foreground rounded-r-none pl-8 text-lg font-bold"
+                                    />
+                                </div>
+                                <Button onClick={handleSetBudget} className="rounded-l-none border-2 border-b-4 border-r-4 border-primary-foreground">Set</Button>
+                            </div>
                         </div>
                     </div>
                     {budgetAmount > 0 && (
