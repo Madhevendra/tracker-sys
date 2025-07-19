@@ -5,10 +5,13 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Event } from '@/lib/types';
 import { AddEventDialog } from './AddEventDialog';
 import { Button } from './ui/button';
-import { PlusIcon, TrashIcon } from './icons';
-import { format, differenceInDays, parseISO, intervalToDuration } from 'date-fns';
+import { PlusIcon, TrashIcon, ChevronsRight } from './icons';
+import { format, parseISO, intervalToDuration } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, ListTodo } from 'lucide-react';
+import Link from 'next/link';
+import { Progress } from './ui/progress';
+
 
 const useCountdown = (targetDate: string) => {
     const countDownDate = useMemo(() => new Date(targetDate).getTime(), [targetDate]);
@@ -92,6 +95,12 @@ export default function EventTracker() {
   const CountdownCard = ({ event }: { event: Event }) => {
     const countdown = useCountdown(event.date);
     const eventDate = parseISO(event.date);
+    const taskProgress = useMemo(() => {
+      if (!event.tasks || event.tasks.length === 0) return 0;
+      const completedTasks = event.tasks.filter(t => t.completed).length;
+      return (completedTasks / event.tasks.length) * 100;
+    }, [event.tasks]);
+
 
     return (
       <Card className="bg-card border-4 border-foreground relative flex flex-col justify-between" style={{boxShadow: '6px 6px 0 0 hsl(var(--foreground))'}}>
@@ -102,7 +111,7 @@ export default function EventTracker() {
           <CardTitle className="font-headline text-2xl text-accent pr-8">{event.name}</CardTitle>
           <CardDescription>{format(eventDate, 'PPP')} {event.time ? `at ${event.time}` : ''}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-grow flex flex-col justify-end">
           {!countdown.expired ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
               <div>
@@ -126,6 +135,26 @@ export default function EventTracker() {
             <p className="text-primary font-bold">The event has started!</p>
           )}
         </CardContent>
+        <div className="p-4 border-t-2 border-foreground mt-4 space-y-2">
+            {event.tasks && event.tasks.length > 0 && (
+                 <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-1 text-sm font-bold">
+                            <ListTodo className="w-4 h-4"/>
+                            <span>Tasks</span>
+                        </div>
+                        <span className="text-xs font-mono">{event.tasks.filter(t=>t.completed).length}/{event.tasks.length}</span>
+                    </div>
+                    <Progress value={taskProgress} className="h-2"/>
+                 </div>
+            )}
+            <Button asChild variant="link" className="p-0 h-auto text-primary justify-end w-full">
+                <Link href={`/events/${event.id}`}>
+                    View Planner
+                    <ChevronsRight className="w-4 h-4 ml-1" />
+                </Link>
+            </Button>
+        </div>
       </Card>
     );
   };
@@ -169,6 +198,12 @@ export default function EventTracker() {
                             </CardHeader>
                              <CardContent>
                                 <p className="text-muted-foreground font-medium">This event has passed.</p>
+                                 <Button asChild variant="link" className="p-0 h-auto text-primary/70 justify-end w-full">
+                                    <Link href={`/events/${event.id}`}>
+                                        View Planner
+                                        <ChevronsRight className="w-4 h-4 ml-1" />
+                                    </Link>
+                                </Button>
                             </CardContent>
                          </Card>
                        ))}

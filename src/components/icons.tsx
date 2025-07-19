@@ -46,3 +46,10 @@ export const CheckIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M6 12 L8 10 L10 12 L16 6 L18 8 L10 16 L6 12 Z" fill="currentColor" strokeWidth="0" />
   </IconWrapper>
 );
+
+export const ChevronsRight = (props: SVGProps<SVGSVGElement>) => (
+    <IconWrapper {...props} strokeWidth="3">
+        <path d="m6 17 5-5-5-5" />
+        <path d="m13 17 5-5-5-5" />
+    </IconWrapper>
+);

@@ -15,13 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusIcon } from './icons';
-import type { Event } from '@/lib/types';
+import type { Event, Task } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { CalendarIcon, Clock } from 'lucide-react';
+import { CalendarIcon, Clock, ListTodo } from 'lucide-react';
 import { format, startOfDay, set } from 'date-fns';
 import { Calendar } from './ui/calendar';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Textarea } from './ui/textarea';
 
 interface AddEventDialogProps {
   onAddEvent: (event: Omit<Event, 'id'>) => void;
@@ -39,6 +40,8 @@ export function AddEventDialog({ onAddEvent, children }: AddEventDialogProps) {
   const [minute, setMinute] = useState<string | undefined>();
   const [period, setPeriod] = useState<'AM' | 'PM' | undefined>();
   const [hasTime, setHasTime] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [tasks, setTasks] = useState<string>('');
 
   const resetForm = () => {
     setName('');
@@ -47,6 +50,8 @@ export function AddEventDialog({ onAddEvent, children }: AddEventDialogProps) {
     setMinute(undefined);
     setPeriod(undefined);
     setHasTime(false);
+    setNotes('');
+    setTasks('');
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -66,13 +71,21 @@ export function AddEventDialog({ onAddEvent, children }: AddEventDialogProps) {
         hours: finalHour,
         minutes: parseInt(minute, 10),
       });
-      timeString = format(finalDate, 'p'); // e.g. 10:30 PM
+      timeString = format(finalDate, 'p');
     }
+    
+    const initialTasks: Task[] = tasks.split('\n').filter(t => t.trim() !== '').map(t => ({
+        id: crypto.randomUUID(),
+        text: t.trim(),
+        completed: false,
+    }));
 
     onAddEvent({
       name: name.trim(),
       date: finalDate.toISOString(),
       time: timeString,
+      notes: notes.trim(),
+      tasks: initialTasks,
     });
 
     resetForm();
@@ -88,32 +101,29 @@ export function AddEventDialog({ onAddEvent, children }: AddEventDialogProps) {
       <DialogContent className="sm:max-w-[425px] bg-background border-4 border-foreground" style={{boxShadow: '4px 4px 0 0 hsl(var(--foreground))'}}>
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl text-accent">Add a New Event</DialogTitle>
-          <DialogDescription>Create a countdown for a special occasion.</DialogDescription>
+          <DialogDescription>Create a countdown and plan for a special occasion.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right font-bold">
-              Name
-            </Label>
+        <form onSubmit={handleSubmit} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+          <div className="space-y-1">
+            <Label htmlFor="name" className="font-bold">Event Name</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="col-span-3 bg-background border-2 border-foreground focus:ring-accent"
+              className="bg-background border-2 border-foreground focus:ring-accent"
               placeholder="e.g. Birthday Trip"
               required
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right font-bold">
-              Date
-            </Label>
+
+          <div className="space-y-1">
+            <Label htmlFor="date" className="font-bold">Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
                   className={cn(
-                    "col-span-3 justify-start text-left font-normal bg-background border-2 border-foreground hover:bg-accent/50",
+                    "w-full justify-start text-left font-normal bg-background border-2 border-foreground hover:bg-accent/50",
                     !date && "text-muted-foreground"
                   )}
                 >
@@ -132,18 +142,18 @@ export function AddEventDialog({ onAddEvent, children }: AddEventDialogProps) {
               </PopoverContent>
             </Popover>
           </div>
-           <div className="grid grid-cols-4 items-center gap-4">
-              <div className="col-start-2 col-span-3">
-                <Button type="button" variant="link" className="p-0 h-auto text-primary" onClick={() => setHasTime(!hasTime)}>
-                  <Clock className="w-4 h-4 mr-2" />
-                  {hasTime ? 'Remove time' : 'Add time'}
-                </Button>
-              </div>
-            </div>
+
+          <div>
+            <Button type="button" variant="link" className="p-0 h-auto text-primary" onClick={() => setHasTime(!hasTime)}>
+              <Clock className="w-4 h-4 mr-2" />
+              {hasTime ? 'Remove time' : 'Add time'}
+            </Button>
+          </div>
+
           {hasTime && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-bold">Time</Label>
-              <div className="col-span-3 grid grid-cols-3 gap-2">
+            <div className="space-y-1">
+              <Label className="font-bold">Time</Label>
+              <div className="grid grid-cols-3 gap-2">
                 <Select value={hour} onValueChange={setHour} required>
                     <SelectTrigger className="bg-background border-2 border-foreground"><SelectValue placeholder="Hr" /></SelectTrigger>
                     <SelectContent>{hours.map(h => <SelectItem key={`h-${h}`} value={h}>{h}</SelectItem>)}</SelectContent>
@@ -162,6 +172,29 @@ export function AddEventDialog({ onAddEvent, children }: AddEventDialogProps) {
               </div>
             </div>
           )}
+
+          <div className="space-y-1">
+            <Label htmlFor="notes" className="font-bold">Notes</Label>
+            <Textarea 
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="bg-background border-2 border-foreground focus:ring-accent"
+              placeholder="e.g. Flight details, hotel address..."
+            />
+          </div>
+          
+           <div className="space-y-1">
+            <Label htmlFor="tasks" className="font-bold flex items-center gap-2"><ListTodo className="w-4 h-4"/>To-Do List</Label>
+             <Textarea 
+              id="tasks"
+              value={tasks}
+              onChange={(e) => setTasks(e.target.value)}
+              className="bg-background border-2 border-foreground focus:ring-accent"
+              placeholder="e.g. Book flights&#10;Pack bags&#10;Confirm hotel reservation"
+            />
+            <p className="text-xs text-muted-foreground">Enter one task per line.</p>
+          </div>
         </form>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>

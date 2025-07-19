@@ -21,9 +21,17 @@ export interface SleepEntry {
   duration: number; // in minutes
 }
 
+export interface Task {
+    id: string;
+    text: string;
+    completed: boolean;
+}
+
 export interface Event {
   id: string;
   name: string;
   date: string; // ISO string format
   time?: string | null; // e.g., "10:30 PM"
+  notes?: string;
+  tasks?: Task[];
 }
