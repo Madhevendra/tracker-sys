@@ -37,13 +37,6 @@ const trackers = [
     'data-ai-hint': 'calendar events',
   },
   {
-    href: '/movies',
-    icon: <Clapperboard className="w-12 h-12 text-primary" />,
-    title: 'Movies & Series Tracker',
-    description: 'Log the movies and series you have watched.',
-    'data-ai-hint': 'entertainment cinema',
-  },
-  {
     href: '/custom',
     icon: <PlusSquare className="w-12 h-12 text-primary" />,
     title: 'Custom Tracker',

@@ -36,15 +36,3 @@ export interface Event {
   notes?: string;
   tasks?: Task[];
 }
-
-export type MovieType = 'movie' | 'series';
-export type MovieStatus = 'to-watch' | 'watching' | 'watched';
-
-export type Movie = {
-  id: string;
-  title: string;
-  type: MovieType;
-  status: MovieStatus;
-  season?: number;
-  episode?: number;
-}
