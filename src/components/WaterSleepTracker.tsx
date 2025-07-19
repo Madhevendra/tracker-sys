@@ -142,8 +142,8 @@ export default function WaterSleepTracker() {
 
         // Average and Best Sleep
         const totalDuration = recentLog.reduce((sum, entry) => sum + entry.duration, 0);
-        const average = totalDuration / recentLog.length;
-        const best = Math.max(...recentLog.map(entry => entry.duration));
+        const average = totalDuration / recentLog.length || 0;
+        const best = Math.max(...recentLog.map(entry => entry.duration)) || 0;
 
         // Consistency Score
         let consistency = 0;
