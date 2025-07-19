@@ -4,7 +4,7 @@ import { format, startOfDay } from 'date-fns';
 import type { Habit } from '@/lib/types';
 import { calculateStreak } from '@/lib/habits';
 import { Button } from './ui/button';
-import { CheckIcon, FlameIcon, TrashIcon } from './icons';
+import { CheckIcon, FlameIcon, TrashIcon, Undo2 } from './icons';
 import { StreakCalendar } from './StreakCalendar';
 
 interface HabitItemProps {
@@ -43,8 +43,8 @@ export function HabitItem({ habit, onDelete, onToggleCompletion }: HabitItemProp
             : 'bg-secondary text-secondary-foreground border-foreground'
         }`}
       >
-        {isCompletedToday ? <CheckIcon className="w-6 h-6" /> : null}
-        {isCompletedToday ? "Completed Today!" : "Mark as Complete"}
+        {isCompletedToday ? <Undo2 className="w-6 h-6" /> : <CheckIcon className="w-6 h-6" />}
+        {isCompletedToday ? "Undo" : "Mark as Complete"}
       </button>
     </div>
   );

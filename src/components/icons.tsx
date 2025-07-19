@@ -46,3 +46,9 @@ export const CheckIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M6 12 L8 10 L10 12 L16 6 L18 8 L10 16 L6 12 Z" fill="currentColor" strokeWidth="0" />
   </IconWrapper>
 );
+
+export const Undo2 = (props: SVGProps<SVGSVGElement>) => (
+    <IconWrapper {...props} strokeWidth="0" fill="currentColor">
+        <path d="M8 6 L8 4 L4 4 L4 12 L6 12 L6 6 Z M18 10 L18 12 L10 12 L10 18 L12 18 L12 20 L8 20 L8 18 L6 18 L6 14 L8 14 L8 12 L16 12 L16 10 Z" />
+    </IconWrapper>
+)
