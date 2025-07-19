@@ -1,6 +1,7 @@
-import { Clapperboard, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import MovieTracker from '@/components/MovieTracker';
 
 export default function MoviesPage() {
   return (
@@ -17,13 +18,9 @@ export default function MoviesPage() {
         <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary" style={{ textShadow: '4px 4px 0 hsl(var(--accent))' }}>
           Movies & Series Tracker
         </h1>
-        <p className="text-muted-foreground mt-4 text-lg">Log the movies and series you have watched.</p>
+        <p className="text-muted-foreground mt-4 text-lg">Your personal library of what to watch and what you've seen.</p>
       </header>
-      <div className="text-center py-16 px-6 bg-secondary/50 rounded-lg border-2 border-dashed border-muted-foreground/30">
-        <Clapperboard className="w-16 h-16 mx-auto text-primary mb-4" />
-        <p className="text-xl font-medium text-muted-foreground">Movies & Series Tracker Coming Soon!</p>
-        <p className="text-muted-foreground mt-2">This feature is under construction.</p>
-      </div>
+      <MovieTracker />
     </main>
   );
 }

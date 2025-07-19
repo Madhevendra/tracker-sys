@@ -35,3 +35,13 @@ export interface Event {
   notes?: string;
   tasks?: Task[];
 }
+
+export interface Movie {
+  id: string;
+  title: string;
+  year: string;
+  description: string;
+  posterDataUri: string;
+  status: 'watchlist' | 'watched';
+  rating?: number; // 0-5 stars
+}
