@@ -1,7 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import MovieTracker from '@/components/MovieTracker';
+import KanbanBoard from '@/components/KanbanBoard';
 
 export default function MoviesPage() {
   return (
@@ -16,11 +16,11 @@ export default function MoviesPage() {
       </div>
       <header className="text-center mb-12">
         <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary" style={{ textShadow: '4px 4px 0 hsl(var(--accent))' }}>
-          Movies & Series Tracker
+          Media Watchlist
         </h1>
-        <p className="text-muted-foreground mt-4 text-lg">Your personal library of what to watch and what you've seen.</p>
+        <p className="text-muted-foreground mt-4 text-lg">Organize your movies and series with a simple Kanban board.</p>
       </header>
-      <MovieTracker />
+      <KanbanBoard />
     </main>
   );
 }

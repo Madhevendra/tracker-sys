@@ -38,25 +38,13 @@ export interface Event {
 }
 
 export type MovieType = 'movie' | 'series';
+export type MovieStatus = 'to-watch' | 'watching' | 'watched';
 
-export type BaseMovie = {
+export type Movie = {
   id: string;
   title: string;
-  year: string;
-  description: string;
-  posterDataUri: string;
-  status: 'watchlist' | 'watching' | 'watched';
-  rating?: number; // 0-5 stars
+  type: MovieType;
+  status: MovieStatus;
+  season?: number;
+  episode?: number;
 }
-
-export type MovieItem = BaseMovie & {
-    type: 'movie';
-}
-
-export type SeriesItem = BaseMovie & {
-    type: 'series';
-    currentSeason: number;
-    currentEpisode: number;
-}
-
-export type Movie = MovieItem | SeriesItem;
